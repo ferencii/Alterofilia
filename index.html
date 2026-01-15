@@ -20,7 +20,7 @@
         /* Utility */
         .hide { display: none !important; }
         .show { display: flex !important; }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.1); }
+        .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border-top: 1px solid rgba(255,255,255,0.1); }
         
         /* Camera Viewport */
         .viewport-container { position: relative; width: 100%; height: 100%; overflow: hidden; background: #000; }
@@ -30,10 +30,62 @@
         .menu-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .menu-card:active { transform: scale(0.95); }
 
-        /* Custom Range Slider */
-        input[type=range] { -webkit-appearance: none; background: transparent; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #3b82f6; margin-top: -6px; }
-        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: #475569; border-radius: 2px; }
+        /* Custom Range Slider (Global Speed) */
+        input[type=range].speed-slider { -webkit-appearance: none; background: transparent; }
+        input[type=range].speed-slider::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #3b82f6; margin-top: -6px; }
+        input[type=range].speed-slider::-webkit-slider-runnable-track { width: 100%; height: 4px; background: #475569; border-radius: 2px; }
+
+        /* Timeline Slider (Individual Videos) */
+        input[type=range].timeline {
+            -webkit-appearance: none; 
+            width: 100%; 
+            background: transparent;
+            height: 10px;
+            cursor: pointer;
+        }
+        input[type=range].timeline::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 12px;
+            width: 12px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 0 4px rgba(0,0,0,0.5);
+            margin-top: -4px;
+        }
+        input[type=range].timeline::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 2px;
+        }
+
+        /* Video Controls Overlay */
+        .vid-controls {
+            opacity: 1; 
+            transition: opacity 0.2s;
+        }
+        
+        /* Video Container & Zoom Logic */
+        .vid-wrapper {
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+        }
+        .vid-content {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transform-origin: center center;
+            transition: transform 0.1s linear;
+            cursor: grab;
+        }
+        .vid-content:active { cursor: grabbing; }
+        .scale-flip { transform: scaleX(-1); }
+
     </style>
 </head>
 <body class="h-screen w-screen flex flex-col">
@@ -176,45 +228,89 @@
     </div>
 
     <!-- 4. COMPARE WORKSPACE -->
-    <div id="compareWorkspace" class="flex-grow flex flex-col hide bg-slate-950">
-        <!-- Split Screen -->
-        <div class="flex-grow relative grid grid-cols-2 gap-1 bg-black overflow-hidden">
-            <!-- Left Video -->
-            <div class="relative group border-r border-slate-800">
-                <video id="vidLeft" class="w-full h-full object-contain" playsinline loop muted></video>
-                <div id="overlayLeft" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50 cursor-pointer hover:bg-slate-900/40 transition">
+    <div id="compareWorkspace" class="flex-grow flex flex-col hide bg-slate-950 overflow-hidden">
+        
+        <!-- NEW GRID CONTAINER FOR FLEXIBLE LAYOUT -->
+        <div id="compareGrid" class="flex-grow flex flex-col min-h-0 relative">
+            
+            <!-- Video 1 (Top/Left) -->
+            <div id="containerTop" class="flex-1 relative border border-slate-800 vid-container transition-all duration-300 min-h-0 min-w-0">
+                <div class="vid-wrapper" id="wrapTop">
+                    <video id="vidTop" class="vid-content bg-black" playsinline loop muted></video>
+                </div>
+                
+                <div id="overlayTop" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50 cursor-pointer hover:bg-slate-900/40 transition z-10">
                     <i class="fa-solid fa-plus text-4xl text-gray-500 mb-2"></i>
-                    <span class="text-xs font-bold text-gray-400">TU VIDEO</span>
-                    <input type="file" accept="video/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="app.loadCompareVideo('left', this)">
+                    <span class="text-xs font-bold text-gray-400">VIDEO 1</span>
+                    <input type="file" accept="video/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="app.loadCompareVideo('top', this)">
+                </div>
+
+                <div class="absolute bottom-0 left-0 w-full p-2 bg-gradient-to-t from-slate-900/90 to-transparent vid-controls z-20 flex flex-col gap-1">
+                     <input type="range" id="seekTop" class="timeline" value="0" min="0" max="100" step="0.1" oninput="app.onSeekInput('top', this.value)">
+                     <div class="flex justify-between items-center px-1">
+                         <div class="flex gap-2">
+                             <button onclick="app.toggleZoom('top')" class="text-white hover:text-blue-400"><i id="iconZoomTop" class="fa-solid fa-magnifying-glass-plus text-xs"></i></button>
+                             <button onclick="app.toggleFlip('top')" class="text-white hover:text-blue-400"><i id="iconFlipTop" class="fa-solid fa-right-left text-xs"></i></button>
+                         </div>
+                         <div class="flex gap-2 items-center">
+                             <button onclick="app.seekSingle('top', -0.1)" class="text-gray-400"><i class="fa-solid fa-backward-step text-xs"></i></button>
+                             <button onclick="app.toggleSinglePlay('top')" class="text-white"><i id="btnPlayTop" class="fa-solid fa-play text-xs"></i></button>
+                             <button onclick="app.seekSingle('top', 0.1)" class="text-gray-400"><i class="fa-solid fa-forward-step text-xs"></i></button>
+                         </div>
+                         <button onclick="app.toggleMaximize('top')" class="text-blue-400 hover:text-white"><i id="iconMaxTop" class="fa-solid fa-expand text-xs"></i></button>
+                     </div>
                 </div>
             </div>
-            <!-- Right Video -->
-            <div class="relative group">
-                <video id="vidRight" class="w-full h-full object-contain" playsinline loop muted></video>
-                <div id="overlayRight" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50 cursor-pointer hover:bg-slate-900/40 transition">
+
+            <!-- Video 2 (Bottom/Right) -->
+            <div id="containerBot" class="flex-1 relative border border-slate-800 vid-container transition-all duration-300 min-h-0 min-w-0">
+                <div class="vid-wrapper" id="wrapBot">
+                    <video id="vidBot" class="vid-content bg-black" playsinline loop muted></video>
+                </div>
+                
+                <div id="overlayBot" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50 cursor-pointer hover:bg-slate-900/40 transition z-10">
                     <i class="fa-solid fa-plus text-4xl text-gray-500 mb-2"></i>
-                    <span class="text-xs font-bold text-gray-400">PRO / REF</span>
-                    <input type="file" accept="video/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="app.loadCompareVideo('right', this)">
+                    <span class="text-xs font-bold text-gray-400">VIDEO 2</span>
+                    <input type="file" accept="video/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="app.loadCompareVideo('bot', this)">
+                </div>
+
+                <div class="absolute bottom-0 left-0 w-full p-2 bg-gradient-to-t from-slate-900/90 to-transparent vid-controls z-20 flex flex-col gap-1">
+                     <input type="range" id="seekBot" class="timeline" value="0" min="0" max="100" step="0.1" oninput="app.onSeekInput('bot', this.value)">
+                     <div class="flex justify-between items-center px-1">
+                         <div class="flex gap-2">
+                             <button onclick="app.toggleZoom('bot')" class="text-white hover:text-purple-400"><i id="iconZoomBot" class="fa-solid fa-magnifying-glass-plus text-xs"></i></button>
+                             <button onclick="app.toggleFlip('bot')" class="text-white hover:text-purple-400"><i id="iconFlipBot" class="fa-solid fa-right-left text-xs"></i></button>
+                         </div>
+                         <div class="flex gap-2 items-center">
+                             <button onclick="app.seekSingle('bot', -0.1)" class="text-gray-400"><i class="fa-solid fa-backward-step text-xs"></i></button>
+                             <button onclick="app.toggleSinglePlay('bot')" class="text-white"><i id="btnPlayBot" class="fa-solid fa-play text-xs"></i></button>
+                             <button onclick="app.seekSingle('bot', 0.1)" class="text-gray-400"><i class="fa-solid fa-forward-step text-xs"></i></button>
+                         </div>
+                         <button onclick="app.toggleMaximize('bot')" class="text-purple-400 hover:text-white"><i id="iconMaxBot" class="fa-solid fa-expand text-xs"></i></button>
+                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Compare Controls -->
-        <div class="h-32 glass p-4 flex flex-col justify-between">
-            <!-- Timeline & Speed -->
-            <div class="flex items-center gap-4 mb-2">
-                <span class="text-xs text-gray-400 w-12">Velocidad</span>
-                <input type="range" min="0.1" max="1" step="0.1" value="1" class="w-full" oninput="app.setSpeed(this.value)">
-                <span id="speedVal" class="text-xs font-mono w-8 text-right">1.0x</span>
+        <!-- Master Controls (Footer) -->
+        <div class="h-auto py-3 glass flex flex-col gap-2 shrink-0 z-30 border-t border-slate-700">
+            <!-- Top Row: Layout & Speed -->
+            <div class="flex items-center gap-2 px-4">
+                <button onclick="app.toggleLayout()" class="text-white bg-slate-700 p-2 rounded hover:bg-slate-600 transition" title="Rotar Layout">
+                    <i id="iconLayout" class="fa-solid fa-table-cells-large fa-rotate-90"></i>
+                </button>
+                <span class="text-xs text-gray-400 font-bold whitespace-nowrap">VEL</span>
+                <input type="range" min="0.1" max="1" step="0.1" value="1" class="w-full speed-slider" oninput="app.setSpeed(this.value)">
+                <span id="speedVal" class="text-xs font-mono w-8 text-right font-bold text-blue-400">1.0x</span>
             </div>
             
-            <!-- Playback -->
-            <div class="flex justify-center gap-6">
-                <button onclick="app.seekCompare(-0.1)" class="text-gray-400 hover:text-white"><i class="fa-solid fa-backward-step fa-lg"></i></button>
-                <button onclick="app.toggleComparePlay()" class="w-12 h-12 bg-blue-600 rounded-full text-white flex items-center justify-center shadow-lg hover:bg-blue-500 transition">
-                    <i id="btnComparePlayIcon" class="fa-solid fa-play"></i>
+            <!-- Bottom Row: Playback -->
+            <div class="flex justify-center gap-8 items-center mt-1">
+                <button onclick="app.seekCompare(-0.1)" class="text-gray-400 hover:text-white p-2 text-xs font-bold"><i class="fa-solid fa-rotate-left"></i> -0.1s</button>
+                <button onclick="app.toggleComparePlay()" class="w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full text-white flex items-center justify-center shadow-lg hover:scale-105 transition border-2 border-white/20">
+                    <i id="btnComparePlayIcon" class="fa-solid fa-play text-xl ml-1"></i>
                 </button>
-                <button onclick="app.seekCompare(0.1)" class="text-gray-400 hover:text-white"><i class="fa-solid fa-forward-step fa-lg"></i></button>
+                <button onclick="app.seekCompare(0.1)" class="text-gray-400 hover:text-white p-2 text-xs font-bold">+0.1s <i class="fa-solid fa-rotate-right"></i></button>
             </div>
         </div>
     </div>
@@ -236,32 +332,33 @@
     </div>
 
     <script>
-        // --- APP LOGIC ---
         const app = {
-            mode: null, // 'AI', 'PATH', 'COMPARE'
-            isCameraActive: false,
-            isRecording: false,
-            mediaRecorder: null,
-            recordedChunks: [],
-            pose: null,
-            barPath: [],
-            frameData: [],
+            mode: null,
+            isCameraActive: false, isRecording: false, mediaRecorder: null, recordedChunks: [],
+            pose: null, barPath: [], frameData: [],
             
-            // DOM Elements
+            // Compare State
+            zoomLevels: { top: 1, bot: 1 },
+            flipStates: { top: 1, bot: 1 },
+            panOffsets: { top: {x:0, y:0}, bot: {x:0, y:0} },
+            dragState: { active: false, startX: 0, startY: 0, initialX: 0, initialY: 0, target: null },
+            layoutMode: 'col', // 'col' or 'row'
+
+            // DOM
             video: document.getElementById('inputVideo'),
             canvas: document.getElementById('outputCanvas'),
             ctx: document.getElementById('outputCanvas').getContext('2d'),
             
             init: function() {
-                // Initialize MediaPipe
                 this.pose = new Pose({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`});
-                this.pose.setOptions({
-                    modelComplexity: 1,
-                    smoothLandmarks: true,
-                    minDetectionConfidence: 0.5,
-                    minTrackingConfidence: 0.5
-                });
+                this.pose.setOptions({modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5});
                 this.pose.onResults(this.onPoseResults.bind(this));
+
+                this.setupPanEvents('wrapTop', 'top');
+                this.setupPanEvents('wrapBot', 'bot');
+                
+                document.getElementById('vidTop').ontimeupdate = () => this.updateSeekUI('top');
+                document.getElementById('vidBot').ontimeupdate = () => this.updateSeekUI('bot');
             },
 
             setMode: function(newMode) {
@@ -269,19 +366,16 @@
                 document.getElementById('mainMenu').classList.add('hide');
                 document.getElementById('workspaceHeader').classList.remove('hide');
                 
-                // Reset Views
                 document.getElementById('cameraWorkspace').classList.add('hide');
                 document.getElementById('compareWorkspace').classList.add('hide');
                 document.getElementById('exerciseSelectorWrapper').classList.add('hide');
                 
-                // Update Title
                 const titles = { 'AI': 'Coach Biomecánico', 'PATH': 'Rastreo de Barra', 'COMPARE': 'Comparador' };
                 document.getElementById('workspaceTitle').innerText = titles[newMode];
 
                 if (newMode === 'AI' || newMode === 'PATH') {
                     document.getElementById('cameraWorkspace').classList.remove('hide');
                     document.getElementById('camStartOverlay').classList.remove('hide');
-                    
                     if (newMode === 'AI') {
                         document.getElementById('exerciseSelectorWrapper').classList.remove('hide');
                         document.getElementById('camInstructions').innerText = "Coloca el móvil de lado (perfil) para que la IA mida los ángulos correctamente.";
@@ -289,148 +383,84 @@
                         document.getElementById('camInstructions').innerText = "Graba de perfil. La línea verde seguirá tus muñecas.";
                     }
                 } else {
-                    // Compare Mode
                     document.getElementById('compareWorkspace').classList.remove('hide');
                 }
             },
 
-            goHome: function() {
-                location.reload(); // Simple reset for stability
-            },
+            goHome: function() { location.reload(); },
 
-            // --- CAMERA & VIDEO HANDLING ---
             startCamera: async function() {
                 try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ 
-                        video: { facingMode: 'environment', width: 1280, height: 720 }, 
-                        audio: false 
-                    });
-                    this.video.srcObject = stream;
-                    this.video.play();
-                    this.isCameraActive = true;
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: 1280, height: 720 }, audio: false });
+                    this.video.srcObject = stream; this.video.play(); this.isCameraActive = true;
                     document.getElementById('camStartOverlay').classList.add('hide');
-                    
-                    // Show specific HUDs
                     if (this.mode === 'AI') document.getElementById('hudAI').classList.remove('hide');
                     if (this.mode === 'PATH') {
                         document.getElementById('hudPath').classList.remove('hide');
                         document.getElementById('hudPathBottom').classList.remove('hide');
                     }
-
                     this.processFrame();
-                } catch (e) {
-                    alert("Error cámara: " + e.message);
-                }
+                } catch (e) { alert("Error cámara: " + e.message); }
             },
             
             handleFileUpload: function(input) {
                 const file = input.files[0];
                 if(file) {
                     const url = URL.createObjectURL(file);
-                    this.video.srcObject = null;
-                    this.video.src = url;
-                    this.video.classList.remove('scale-x-[-1]'); // Don't mirror uploaded files
-                    this.canvas.classList.remove('scale-x-[-1]');
-                    
+                    this.video.srcObject = null; this.video.src = url;
+                    this.video.classList.remove('scale-x-[-1]'); this.canvas.classList.remove('scale-x-[-1]');
                     document.getElementById('camStartOverlay').classList.add('hide');
                     if (this.mode === 'AI') document.getElementById('hudAI').classList.remove('hide');
                     if (this.mode === 'PATH') {
                         document.getElementById('hudPath').classList.remove('hide');
                         document.getElementById('hudPathBottom').classList.remove('hide');
                     }
-                    
-                    this.video.play();
-                    this.processFrame();
+                    this.video.play(); this.processFrame();
                 }
             },
 
             processFrame: async function() {
-                if (this.video.paused || this.video.ended) {
-                    requestAnimationFrame(this.processFrame.bind(this));
-                    return;
-                }
-                await this.pose.send({image: this.video});
-                requestAnimationFrame(this.processFrame.bind(this));
+                if (this.video.paused || this.video.ended) { requestAnimationFrame(this.processFrame.bind(this)); return; }
+                await this.pose.send({image: this.video}); requestAnimationFrame(this.processFrame.bind(this));
             },
 
-            // --- MEDIAPIPE LOGIC ---
             onPoseResults: function(results) {
-                this.canvas.width = this.video.videoWidth;
-                this.canvas.height = this.video.videoHeight;
+                this.canvas.width = this.video.videoWidth; this.canvas.height = this.video.videoHeight;
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
                 if (!results.poseLandmarks) return;
-                const lm = results.poseLandmarks;
-
-                if (this.mode === 'AI') {
-                    this.renderAI(lm);
-                } else if (this.mode === 'PATH') {
-                    this.renderPath(lm);
-                }
+                if (this.mode === 'AI') this.renderAI(results.poseLandmarks);
+                else if (this.mode === 'PATH') this.renderPath(results.poseLandmarks);
             },
 
-            // LOGIC FOR MODE: PATH
             renderPath: function(lm) {
-                // Average Wrist Position
-                const leftWrist = lm[15];
-                const rightWrist = lm[16];
-                
+                const leftWrist = lm[15]; const rightWrist = lm[16];
                 if (leftWrist.visibility > 0.5 && rightWrist.visibility > 0.5) {
                     const x = (leftWrist.x + rightWrist.x) / 2 * this.canvas.width;
                     const y = (leftWrist.y + rightWrist.y) / 2 * this.canvas.height;
                     this.barPath.push({x, y});
                 }
-
-                // Draw Path
                 if (this.barPath.length > 1) {
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(this.barPath[0].x, this.barPath[0].y);
-                    for (let i = 1; i < this.barPath.length; i++) {
-                        this.ctx.lineTo(this.barPath[i].x, this.barPath[i].y);
-                    }
-                    this.ctx.strokeStyle = '#22c55e'; // Green
-                    this.ctx.lineWidth = 4;
-                    this.ctx.lineCap = 'round';
-                    this.ctx.stroke();
+                    this.ctx.beginPath(); this.ctx.moveTo(this.barPath[0].x, this.barPath[0].y);
+                    for (let i = 1; i < this.barPath.length; i++) this.ctx.lineTo(this.barPath[i].x, this.barPath[i].y);
+                    this.ctx.strokeStyle = '#22c55e'; this.ctx.lineWidth = 4; this.ctx.lineCap = 'round'; this.ctx.stroke();
                 }
-                
-                // Draw current point
                 if (this.barPath.length > 0) {
                     const last = this.barPath[this.barPath.length - 1];
-                    this.ctx.beginPath();
-                    this.ctx.arc(last.x, last.y, 8, 0, 2 * Math.PI);
-                    this.ctx.fillStyle = '#fff';
-                    this.ctx.fill();
+                    this.ctx.beginPath(); this.ctx.arc(last.x, last.y, 8, 0, 2 * Math.PI); this.ctx.fillStyle = '#fff'; this.ctx.fill();
                 }
             },
             
-            clearPath: function() {
-                this.barPath = [];
-            },
+            clearPath: function() { this.barPath = []; },
 
-            // LOGIC FOR MODE: AI
             renderAI: function(lm) {
-                // 1. Draw Skeleton
                 drawConnectors(this.ctx, lm, POSE_CONNECTIONS, {color: 'rgba(255,255,255,0.2)', lineWidth: 2});
-                
-                // 2. Calc Stats
-                const shoulder = lm[12];
-                const hip = lm[24];
-                const knee = lm[26];
-                const ankle = lm[28];
-                
+                const shoulder = lm[12]; const hip = lm[24]; const knee = lm[26]; const ankle = lm[28];
                 if (hip && knee && ankle) {
                     const kneeAngle = this.calculateAngle(hip, knee, ankle);
                     const hipAngle = this.calculateAngle(shoulder, hip, knee);
-                    
-                    // Update HUD
                     document.getElementById('valKnee').innerText = Math.round(kneeAngle) + "°";
                     document.getElementById('valHip').innerText = Math.round(hipAngle) + "°";
-                    
-                    // Collect Data if recording
-                    if (this.isRecording) {
-                        this.frameData.push({kneeAngle, hipAngle, hipY: hip.y});
-                    }
+                    if (this.isRecording) this.frameData.push({kneeAngle, hipAngle, hipY: hip.y});
                 }
             },
 
@@ -444,118 +474,190 @@
             toggleRecording: function() {
                 const btn = document.getElementById('recInnerAI');
                 if (!this.isRecording) {
-                    this.isRecording = true;
-                    this.frameData = [];
-                    btn.classList.replace('rounded-full', 'rounded-sm');
-                    btn.classList.add('scale-50');
+                    this.isRecording = true; this.frameData = [];
+                    btn.classList.replace('rounded-full', 'rounded-sm'); btn.classList.add('scale-50');
                     document.getElementById('valPhase').innerText = "GRABANDO...";
                     document.getElementById('valPhase').className = "font-bold text-xs uppercase mt-1 text-red-500 animate-pulse";
                 } else {
                     this.isRecording = false;
-                    btn.classList.replace('rounded-sm', 'rounded-full');
-                    btn.classList.remove('scale-50');
+                    btn.classList.replace('rounded-sm', 'rounded-full'); btn.classList.remove('scale-50');
                     document.getElementById('valPhase').innerText = "PROCESANDO";
                     document.getElementById('valPhase').className = "font-bold text-xs uppercase mt-1 text-white";
-                    
                     this.analyzeLift();
                 }
             },
 
             analyzeLift: function() {
                 const type = document.getElementById('exerciseSelect').value;
-                let faults = [];
-                let msg = "";
-
-                // Logic: Exercise Groups
+                let faults = []; let msg = "";
                 const isSquatVariant = type.includes('SQUAT') || type.includes('CLEAN') || type.includes('SNATCH');
                 const isPowerVariant = type.includes('POWER');
                 const isMuscleVariant = type.includes('MUSCLE');
                 const isPush = type.includes('JERK') || type.includes('PRESS');
 
-                // Simple Analysis Logic
-                if (this.frameData.length < 20) {
-                    msg = "Video demasiado corto.";
-                } else {
-                    // Find lowest point (max Hip Y - inverted in logic? MediaPipe Y 0 is top, 1 is bottom)
-                    // So higher Y value means lower physical position
+                if (this.frameData.length < 20) { msg = "Video demasiado corto."; } else {
                     const deepest = this.frameData.reduce((prev, curr) => prev.hipY > curr.hipY ? prev : curr);
-                    
-                    // CHECK 1: DEPTH (Sentadillas y Recepciones completas)
                     if (isSquatVariant && !isPowerVariant && !isMuscleVariant && !isPush) {
-                        // Angle < 100 usually means parallel or below depending on camera
-                        if (deepest.kneeAngle > 100) {
-                            faults.push("No rompiste el paralelo (Profundidad insuficiente).");
-                        } else {
-                            faults.push("¡Buena profundidad alcanzada!");
-                        }
+                        if (deepest.kneeAngle > 100) faults.push("No rompiste el paralelo (Profundidad insuficiente).");
+                        else faults.push("¡Buena profundidad alcanzada!");
                     }
-
-                    // CHECK 2: POWER VARIANT (Debe ser ALTA)
                     if (isPowerVariant) {
-                        if (deepest.kneeAngle < 90) {
-                            faults.push("Bajaste demasiado para ser Power (recepcionaste profundo).");
-                        } else {
-                            faults.push("Buena recepción alta (Power).");
-                        }
+                        if (deepest.kneeAngle < 90) faults.push("Bajaste demasiado para ser Power.");
+                        else faults.push("Buena recepción alta (Power).");
                     }
-                    
                     msg = "Análisis completado para " + type.replace(/_/g, " ");
                 }
-
-                // Show Modal
                 document.getElementById('aiFeedbackText').innerText = msg;
-                const list = document.getElementById('aiFaultsList');
-                list.innerHTML = "";
-                faults.forEach(f => {
-                    list.innerHTML += `<div class="bg-slate-700/50 p-2 rounded text-sm text-gray-300"><i class="fa-solid fa-circle-info mr-2 text-blue-400"></i>${f}</div>`;
-                });
+                const list = document.getElementById('aiFaultsList'); list.innerHTML = "";
+                faults.forEach(f => { list.innerHTML += `<div class="bg-slate-700/50 p-2 rounded text-sm text-gray-300"><i class="fa-solid fa-circle-info mr-2 text-blue-400"></i>${f}</div>`; });
                 document.getElementById('aiModal').classList.remove('hidden');
             },
 
-            // --- COMPARE MODE LOGIC ---
             loadCompareVideo: function(side, input) {
                 const file = input.files[0];
                 if (!file) return;
-                const vid = side === 'left' ? document.getElementById('vidLeft') : document.getElementById('vidRight');
-                const overlay = side === 'left' ? document.getElementById('overlayLeft') : document.getElementById('overlayRight');
-                
+                const vid = side === 'top' ? document.getElementById('vidTop') : document.getElementById('vidBot');
+                const overlay = side === 'top' ? document.getElementById('overlayTop') : document.getElementById('overlayBot');
                 vid.src = URL.createObjectURL(file);
                 overlay.classList.add('hide');
             },
 
-            toggleComparePlay: function() {
-                const v1 = document.getElementById('vidLeft');
-                const v2 = document.getElementById('vidRight');
-                const icon = document.getElementById('btnComparePlayIcon');
+            updateSeekUI: function(id) {
+                const vid = document.getElementById(id === 'top' ? 'vidTop' : 'vidBot');
+                const slider = document.getElementById(id === 'top' ? 'seekTop' : 'seekBot');
+                if (!vid.duration) return;
+                slider.value = (vid.currentTime / vid.duration) * 100;
+            },
+            
+            onSeekInput: function(id, val) {
+                const vid = document.getElementById(id === 'top' ? 'vidTop' : 'vidBot');
+                if (!vid.duration) return;
+                const time = (val / 100) * vid.duration;
+                vid.currentTime = time;
+            },
 
+            toggleZoom: function(id) {
+                const vid = document.getElementById(id === 'top' ? 'vidTop' : 'vidBot');
+                const icon = document.getElementById(id === 'top' ? 'iconZoomTop' : 'iconZoomBot');
+                let z = this.zoomLevels[id];
+                if (z === 1) z = 1.5; else if (z === 1.5) z = 2; else z = 1;
+                this.zoomLevels[id] = z;
+                if (z === 1) this.panOffsets[id] = {x:0, y:0};
+                this.applyTransform(id);
+                if (z === 1) icon.className = "fa-solid fa-magnifying-glass-plus text-xs";
+                else icon.className = "fa-solid fa-magnifying-glass-minus text-xs text-blue-400";
+            },
+
+            toggleFlip: function(id) {
+                const icon = document.getElementById(id === 'top' ? 'iconFlipTop' : 'iconFlipBot');
+                this.flipStates[id] *= -1;
+                this.applyTransform(id);
+                icon.className = this.flipStates[id] === -1 ? "fa-solid fa-right-left text-xs text-blue-400" : "fa-solid fa-right-left text-xs";
+            },
+
+            applyTransform: function(id) {
+                const vid = document.getElementById(id === 'top' ? 'vidTop' : 'vidBot');
+                const z = this.zoomLevels[id];
+                const f = this.flipStates[id];
+                const p = this.panOffsets[id];
+                vid.style.transform = `translate(${p.x}px, ${p.y}px) scale(${z}) scaleX(${f})`;
+            },
+
+            setupPanEvents: function(wrapperId, id) {
+                const wrap = document.getElementById(wrapperId);
+                const startDrag = (e) => {
+                    if (this.zoomLevels[id] === 1) return;
+                    e.preventDefault();
+                    this.dragState.active = true; this.dragState.target = id;
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    this.dragState.startX = clientX; this.dragState.startY = clientY;
+                    this.dragState.initialX = this.panOffsets[id].x; this.dragState.initialY = this.panOffsets[id].y;
+                };
+                const doDrag = (e) => {
+                    if (!this.dragState.active || this.dragState.target !== id) return;
+                    e.preventDefault();
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    const dx = clientX - this.dragState.startX; const dy = clientY - this.dragState.startY;
+                    this.panOffsets[id].x = this.dragState.initialX + dx;
+                    this.panOffsets[id].y = this.dragState.initialY + dy;
+                    this.applyTransform(id);
+                };
+                const endDrag = () => { this.dragState.active = false; this.dragState.target = null; };
+                wrap.addEventListener('mousedown', startDrag); window.addEventListener('mousemove', doDrag); window.addEventListener('mouseup', endDrag);
+                wrap.addEventListener('touchstart', startDrag, {passive: false}); window.addEventListener('touchmove', doDrag, {passive: false}); window.addEventListener('touchend', endDrag);
+            },
+
+            toggleComparePlay: function() {
+                const v1 = document.getElementById('vidTop'); const v2 = document.getElementById('vidBot');
+                const icon = document.getElementById('btnComparePlayIcon');
                 if (v1.paused) {
-                    v1.play();
-                    v2.play();
-                    icon.classList.replace('fa-play', 'fa-pause');
+                    v1.play(); v2.play(); icon.classList.replace('fa-play', 'fa-pause');
+                    document.getElementById('btnPlayTop').classList.replace('fa-play', 'fa-pause');
+                    document.getElementById('btnPlayBot').classList.replace('fa-play', 'fa-pause');
                 } else {
-                    v1.pause();
-                    v2.pause();
-                    icon.classList.replace('fa-pause', 'fa-play');
+                    v1.pause(); v2.pause(); icon.classList.replace('fa-pause', 'fa-play');
+                    document.getElementById('btnPlayTop').classList.replace('fa-pause', 'fa-play');
+                    document.getElementById('btnPlayBot').classList.replace('fa-pause', 'fa-play');
+                }
+            },
+            
+            toggleSinglePlay: function(id) {
+                const vid = document.getElementById(id === 'top' ? 'vidTop' : 'vidBot');
+                const icon = document.getElementById(id === 'top' ? 'btnPlayTop' : 'btnPlayBot');
+                if (vid.paused) { vid.play(); icon.classList.replace('fa-play', 'fa-pause'); }
+                else { vid.pause(); icon.classList.replace('fa-pause', 'fa-play'); }
+            },
+            
+            seekSingle: function(id, seconds) {
+                const vid = document.getElementById(id === 'top' ? 'vidTop' : 'vidBot');
+                vid.currentTime += seconds;
+            },
+
+            toggleMaximize: function(targetId) {
+                const topCon = document.getElementById('containerTop');
+                const botCon = document.getElementById('containerBot');
+                const iconTop = document.getElementById('iconMaxTop');
+                const iconBot = document.getElementById('iconMaxBot');
+                if (targetId === 'top') {
+                    if (botCon.classList.contains('hide')) { botCon.classList.remove('hide'); iconTop.classList.replace('fa-compress', 'fa-expand'); }
+                    else { botCon.classList.add('hide'); iconTop.classList.replace('fa-expand', 'fa-compress'); }
+                } else {
+                    if (topCon.classList.contains('hide')) { topCon.classList.remove('hide'); iconBot.classList.replace('fa-compress', 'fa-expand'); }
+                    else { topCon.classList.add('hide'); iconBot.classList.replace('fa-expand', 'fa-compress'); }
+                }
+            },
+            
+            toggleLayout: function() {
+                const grid = document.getElementById('compareGrid');
+                const icon = document.getElementById('iconLayout');
+                if (this.layoutMode === 'col') {
+                    this.layoutMode = 'row';
+                    grid.classList.remove('flex-col');
+                    grid.classList.add('flex-row');
+                    icon.classList.remove('fa-rotate-90'); // Show vertical bars icon
+                } else {
+                    this.layoutMode = 'col';
+                    grid.classList.remove('flex-row');
+                    grid.classList.add('flex-col');
+                    icon.classList.add('fa-rotate-90'); // Show horizontal stack icon
                 }
             },
 
             setSpeed: function(val) {
-                document.getElementById('vidLeft').playbackRate = val;
-                document.getElementById('vidRight').playbackRate = val;
+                document.getElementById('vidTop').playbackRate = val;
+                document.getElementById('vidBot').playbackRate = val;
                 document.getElementById('speedVal').innerText = val + "x";
             },
 
             seekCompare: function(seconds) {
-                const v1 = document.getElementById('vidLeft');
-                const v2 = document.getElementById('vidRight');
-                v1.currentTime += seconds;
-                v2.currentTime += seconds;
+                const v1 = document.getElementById('vidTop'); const v2 = document.getElementById('vidBot');
+                v1.currentTime += seconds; v2.currentTime += seconds;
             }
         };
 
-        // Init
         app.init();
-
     </script>
 </body>
 </html>
