@@ -3,13 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Haltero AI Coach Pro</title>
+    <title>Haltero AI Ultimate</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700;900&display=swap" rel="stylesheet">
     
     <!-- MediaPipe -->
@@ -18,513 +15,546 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
 
     <style>
-        body { 
-            background-color: #111827; 
-            color: #f3f4f6; 
-            font-family: 'Roboto', sans-serif; 
-            overscroll-behavior: none;
-        }
+        body { background-color: #0f172a; color: #f3f4f6; font-family: 'Roboto', sans-serif; overflow: hidden; }
         
-        /* Video Container - Cinematic Feel */
-        .viewport-container {
-            position: relative;
-            width: 100%;
-            height: 65vh; /* Altura principal para el video */
-            background: #000;
-            overflow: hidden;
-            border-bottom: 1px solid #374151;
-        }
+        /* Utility */
+        .hide { display: none !important; }
+        .show { display: flex !important; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.1); }
+        
+        /* Camera Viewport */
+        .viewport-container { position: relative; width: 100%; height: 100%; overflow: hidden; background: #000; }
+        video.cam, canvas.cam { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        
+        /* Menu Cards */
+        .menu-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .menu-card:active { transform: scale(0.95); }
 
-        video, canvas {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            object-fit: cover;
-        }
-
-        /* UI Overlays */
-        .overlay-gradient {
-            background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 20%, rgba(0,0,0,0) 80%, rgba(0,0,0,0.8) 100%);
-        }
-
-        .hud-stat {
-            background: rgba(17, 24, 39, 0.85);
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        /* Report Modal Animation */
-        @keyframes slideUp {
-            from { transform: translateY(100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        .report-panel {
-            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        /* Custom Scrollbar */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* Recording Pulse */
-        .pulse-ring {
-            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-            animation: pulse-red 2s infinite;
-        }
-        @keyframes pulse-red {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-        }
+        /* Custom Range Slider */
+        input[type=range] { -webkit-appearance: none; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #3b82f6; margin-top: -6px; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: #475569; border-radius: 2px; }
     </style>
 </head>
-<body class="flex flex-col h-screen overflow-hidden">
+<body class="h-screen w-screen flex flex-col">
 
-    <!-- 1. TOP BAR (Transparent Overlay) -->
-    <div class="fixed top-0 left-0 w-full z-20 p-4 flex justify-between items-start overlay-gradient h-24 pointer-events-none">
-        <div class="pointer-events-auto">
-            <h1 class="text-lg font-black italic tracking-tighter text-white">HALTERO<span class="text-blue-500">AI</span></h1>
-            <div class="flex items-center gap-2 mt-1">
-                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                <span class="text-xs text-gray-300 font-mono tracking-wide">MOTOR BIOMECÁNICO ACTIVO</span>
-            </div>
+    <!-- 1. MAIN MENU SCREEN -->
+    <div id="mainMenu" class="absolute inset-0 z-50 bg-slate-900 flex flex-col p-6 overflow-y-auto">
+        <header class="mb-8 mt-4">
+            <h1 class="text-3xl font-black italic tracking-tighter">HALTERO<span class="text-blue-500">AI</span></h1>
+            <p class="text-gray-400 text-sm">Elige tu herramienta de entrenamiento</p>
+        </header>
+
+        <div class="flex-grow grid gap-4 pb-8">
+            <!-- Mode 1: AI Analysis -->
+            <button onclick="app.setMode('AI')" class="menu-card bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6 rounded-2xl text-left shadow-lg relative overflow-hidden group">
+                <div class="absolute right-0 top-0 p-4 opacity-20 group-hover:opacity-40 transition"><i class="fa-solid fa-robot text-6xl text-blue-500"></i></div>
+                <div class="relative z-10">
+                    <span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded uppercase">Recomendado</span>
+                    <h2 class="text-xl font-bold mt-2 text-white">Coach IA</h2>
+                    <p class="text-sm text-gray-400 mt-1">Análisis biomecánico en tiempo real. Detecta profundidad, postura y errores según el ejercicio.</p>
+                </div>
+            </button>
+
+            <!-- Mode 2: Bar Path -->
+            <button onclick="app.setMode('PATH')" class="menu-card bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6 rounded-2xl text-left shadow-lg relative overflow-hidden group">
+                <div class="absolute right-0 top-0 p-4 opacity-20 group-hover:opacity-40 transition"><i class="fa-solid fa-wave-square text-6xl text-green-500"></i></div>
+                <div class="relative z-10">
+                    <h2 class="text-xl font-bold text-white">Trayectoria</h2>
+                    <p class="text-sm text-gray-400 mt-1">Rastreo visual de la barra. Comprueba tu verticalidad y consistencia.</p>
+                </div>
+            </button>
+
+            <!-- Mode 3: Compare -->
+            <button onclick="app.setMode('COMPARE')" class="menu-card bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6 rounded-2xl text-left shadow-lg relative overflow-hidden group">
+                <div class="absolute right-0 top-0 p-4 opacity-20 group-hover:opacity-40 transition"><i class="fa-solid fa-table-columns text-6xl text-purple-500"></i></div>
+                <div class="relative z-10">
+                    <h2 class="text-xl font-bold text-white">Lado a Lado</h2>
+                    <p class="text-sm text-gray-400 mt-1">Compara tus videos con profesionales. Cámara lenta y sync.</p>
+                </div>
+            </button>
         </div>
+    </div>
+
+    <!-- 2. WORKSPACE HEADER (Shared) -->
+    <div id="workspaceHeader" class="glass h-14 flex items-center justify-between px-4 z-40 hide">
+        <button onclick="app.goHome()" class="text-gray-300 hover:text-white"><i class="fa-solid fa-arrow-left"></i> Menú</button>
+        <h2 id="workspaceTitle" class="font-bold text-sm tracking-wide uppercase text-blue-400">MODO</h2>
         
-        <!-- Exercise Selector -->
-        <div class="pointer-events-auto bg-gray-800 rounded-lg p-1 border border-gray-700 shadow-xl">
-            <select id="exerciseType" class="bg-transparent text-xs font-bold text-white outline-none px-2 py-1">
-                <option value="SQUAT">SENTADILLA</option>
-                <option value="CLEAN">CLEAN / CARGADA</option>
-                <option value="SNATCH">SNATCH / ARRANCADA</option>
-                <option value="JERK">JERK / ENVIÓN</option>
+        <!-- Expanded Exercise Selector -->
+        <div id="exerciseSelectorWrapper" class="hide max-w-[50%]">
+            <select id="exerciseSelect" class="bg-slate-800 text-xs rounded border border-slate-600 px-2 py-1 outline-none w-full truncate">
+                <optgroup label="SENTADILLAS">
+                    <option value="BACK_SQUAT">Back Squat (Trasera)</option>
+                    <option value="FRONT_SQUAT">Front Squat (Frontal)</option>
+                    <option value="OH_SQUAT">Overhead Squat</option>
+                </optgroup>
+                <optgroup label="CLEAN (CARGADA)">
+                    <option value="SQUAT_CLEAN">Squat Clean (Completo)</option>
+                    <option value="POWER_CLEAN">Power Clean (Cargada de Potencia)</option>
+                    <option value="MUSCLE_CLEAN">Muscle Clean (Estricto/Sin flexión)</option>
+                    <option value="HANG_SQUAT_CLEAN">Hang Squat Clean (Colgante)</option>
+                    <option value="HANG_POWER_CLEAN">Hang Power Clean</option>
+                </optgroup>
+                <optgroup label="SNATCH (ARRANCADA)">
+                    <option value="SQUAT_SNATCH">Squat Snatch (Completo)</option>
+                    <option value="POWER_SNATCH">Power Snatch (De Potencia)</option>
+                    <option value="MUSCLE_SNATCH">Muscle Snatch (Estricto)</option>
+                    <option value="HANG_SNATCH">Hang Snatch (Colgante)</option>
+                </optgroup>
+                <optgroup label="PUSH & OVERHEAD">
+                    <option value="SPLIT_JERK">Split Jerk (Envión Tijera)</option>
+                    <option value="PUSH_JERK">Push Jerk (Envión de Potencia)</option>
+                    <option value="PUSH_PRESS">Push Press</option>
+                    <option value="STRICT_PRESS">Strict Press (Militar)</option>
+                </optgroup>
+                <optgroup label="TIRONES">
+                    <option value="DEADLIFT">Deadlift (Peso Muerto)</option>
+                    <option value="CLEAN_PULL">Clean Pull (Tirón Cargada)</option>
+                    <option value="SNATCH_PULL">Snatch Pull (Tirón Arrancada)</option>
+                </optgroup>
             </select>
         </div>
     </div>
 
-    <!-- 2. MAIN VIEWPORT (Video & AR) -->
-    <div class="viewport-container shadow-2xl">
-        <video id="inputVideo" playsinline muted class="transform scale-x-[-1]"></video> <!-- Mirrored for selfie cam -->
-        <canvas id="outputCanvas" class="transform scale-x-[-1]"></canvas>
-        
-        <!-- Live Feedback Toast (Dynamic) -->
-        <div id="liveFeedback" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none transition-opacity duration-200 opacity-0">
-            <div class="bg-black/70 backdrop-blur-md px-6 py-3 rounded-xl border border-white/20">
-                <span id="feedbackText" class="text-2xl font-black text-white italic uppercase tracking-widest">GOOD LIFT</span>
+    <!-- 3. CAMERA WORKSPACE (Used by AI & Path) -->
+    <div id="cameraWorkspace" class="flex-grow relative hide bg-black">
+        <video id="inputVideo" playsinline muted class="cam transform scale-x-[-1]"></video>
+        <canvas id="outputCanvas" class="cam transform scale-x-[-1]"></canvas>
+
+        <!-- Start Overlay -->
+        <div id="camStartOverlay" class="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center z-30">
+            <div class="text-center p-6">
+                <div class="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/30">
+                    <i class="fa-solid fa-camera text-3xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2">Cámara Lista</h3>
+                <p id="camInstructions" class="text-sm text-gray-400 mb-6">Coloca el móvil de perfil. Asegúrate que se vea todo el cuerpo.</p>
+                <div class="flex gap-2 justify-center">
+                    <button onclick="app.startCamera()" class="bg-white text-slate-900 font-bold py-3 px-6 rounded-xl hover:bg-gray-100">Activar Cámara</button>
+                    <label class="bg-slate-700 text-white font-bold py-3 px-6 rounded-xl cursor-pointer hover:bg-slate-600">
+                        <i class="fa-solid fa-upload"></i>
+                        <input type="file" accept="video/*" class="hidden" onchange="app.handleFileUpload(this)">
+                    </label>
+                </div>
             </div>
         </div>
 
-        <!-- Start Screen Overlay -->
-        <div id="startScreen" class="absolute inset-0 bg-gray-900 z-30 flex flex-col items-center justify-center p-6 text-center">
-            <div class="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-blue-500/30">
-                <i class="fa-solid fa-camera text-4xl text-white"></i>
+        <!-- AI HUD (Metrics) -->
+        <div id="hudAI" class="absolute bottom-0 left-0 w-full p-4 pb-8 bg-gradient-to-t from-black to-transparent hide">
+            <div class="flex justify-center mb-4">
+                <button id="btnRecordAI" class="w-16 h-16 rounded-full border-4 border-slate-500 flex items-center justify-center transition-transform active:scale-95" onclick="app.toggleRecording()">
+                    <div id="recInnerAI" class="w-12 h-12 bg-red-500 rounded-full"></div>
+                </button>
             </div>
-            <h2 class="text-2xl font-bold mb-2">Analizador de Técnica</h2>
-            <p class="text-gray-400 text-sm mb-8 max-w-xs">Coloca el móvil en el suelo o trípode. Asegúrate de que se vea todo tu cuerpo de perfil o 45°.</p>
+            <div class="grid grid-cols-3 gap-2">
+                <div class="glass rounded-lg p-2 text-center">
+                    <div class="text-[10px] text-gray-400 uppercase">Rodilla</div>
+                    <div class="font-mono font-bold text-xl text-blue-400" id="valKnee">--</div>
+                </div>
+                <div class="glass rounded-lg p-2 text-center">
+                    <div class="text-[10px] text-gray-400 uppercase">Cadera</div>
+                    <div class="font-mono font-bold text-xl text-purple-400" id="valHip">--</div>
+                </div>
+                <div class="glass rounded-lg p-2 text-center border-l-2 border-green-500">
+                    <div class="text-[10px] text-gray-400 uppercase">Estado</div>
+                    <div class="font-bold text-xs uppercase mt-1" id="valPhase">Listo</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PATH HUD -->
+        <div id="hudPath" class="absolute top-4 right-4 z-20 hide">
+            <button onclick="app.clearPath()" class="glass px-3 py-2 rounded text-xs text-red-400 font-bold"><i class="fa-solid fa-eraser"></i> Borrar</button>
+        </div>
+        <div id="hudPathBottom" class="absolute bottom-0 left-0 w-full p-6 flex justify-center pb-12 bg-gradient-to-t from-black to-transparent hide">
+            <div class="text-center">
+                <p class="text-xs text-green-400 font-bold mb-2 uppercase tracking-wider animate-pulse">Rastreando Trayectoria</p>
+                <p class="text-xs text-gray-400">Realiza el levantamiento. La línea se dibujará sola.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. COMPARE WORKSPACE -->
+    <div id="compareWorkspace" class="flex-grow flex flex-col hide bg-slate-950">
+        <!-- Split Screen -->
+        <div class="flex-grow relative grid grid-cols-2 gap-1 bg-black overflow-hidden">
+            <!-- Left Video -->
+            <div class="relative group border-r border-slate-800">
+                <video id="vidLeft" class="w-full h-full object-contain" playsinline loop muted></video>
+                <div id="overlayLeft" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50 cursor-pointer hover:bg-slate-900/40 transition">
+                    <i class="fa-solid fa-plus text-4xl text-gray-500 mb-2"></i>
+                    <span class="text-xs font-bold text-gray-400">TU VIDEO</span>
+                    <input type="file" accept="video/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="app.loadCompareVideo('left', this)">
+                </div>
+            </div>
+            <!-- Right Video -->
+            <div class="relative group">
+                <video id="vidRight" class="w-full h-full object-contain" playsinline loop muted></video>
+                <div id="overlayRight" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50 cursor-pointer hover:bg-slate-900/40 transition">
+                    <i class="fa-solid fa-plus text-4xl text-gray-500 mb-2"></i>
+                    <span class="text-xs font-bold text-gray-400">PRO / REF</span>
+                    <input type="file" accept="video/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="app.loadCompareVideo('right', this)">
+                </div>
+            </div>
+        </div>
+
+        <!-- Compare Controls -->
+        <div class="h-32 glass p-4 flex flex-col justify-between">
+            <!-- Timeline & Speed -->
+            <div class="flex items-center gap-4 mb-2">
+                <span class="text-xs text-gray-400 w-12">Velocidad</span>
+                <input type="range" min="0.1" max="1" step="0.1" value="1" class="w-full" oninput="app.setSpeed(this.value)">
+                <span id="speedVal" class="text-xs font-mono w-8 text-right">1.0x</span>
+            </div>
             
-            <div class="flex gap-4 w-full max-w-sm">
-                <button id="btnCamera" class="flex-1 bg-white text-black py-4 rounded-xl font-bold hover:bg-gray-100 transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-video"></i> Cámara
+            <!-- Playback -->
+            <div class="flex justify-center gap-6">
+                <button onclick="app.seekCompare(-0.1)" class="text-gray-400 hover:text-white"><i class="fa-solid fa-backward-step fa-lg"></i></button>
+                <button onclick="app.toggleComparePlay()" class="w-12 h-12 bg-blue-600 rounded-full text-white flex items-center justify-center shadow-lg hover:bg-blue-500 transition">
+                    <i id="btnComparePlayIcon" class="fa-solid fa-play"></i>
                 </button>
-                <button class="relative flex-1 bg-gray-800 border border-gray-700 text-white py-4 rounded-xl font-bold hover:bg-gray-700 transition flex items-center justify-center gap-2 overflow-hidden">
-                    <i class="fa-solid fa-upload"></i> Subir Video
-                    <input type="file" id="fileInput" accept="video/*" class="absolute inset-0 opacity-0 cursor-pointer">
-                </button>
+                <button onclick="app.seekCompare(0.1)" class="text-gray-400 hover:text-white"><i class="fa-solid fa-forward-step fa-lg"></i></button>
             </div>
         </div>
     </div>
 
-    <!-- 3. CONTROL CENTER (Bottom) -->
-    <div class="flex-grow bg-gray-900 z-10 flex flex-col relative rounded-t-3xl -mt-6 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] border-t border-gray-800">
-        
-        <!-- Drag Handle -->
-        <div class="w-full flex justify-center pt-3 pb-1">
-            <div class="w-12 h-1 bg-gray-700 rounded-full"></div>
+    <!-- AI REPORT MODAL -->
+    <div id="aiModal" class="fixed inset-0 z-[60] bg-slate-900/95 hidden flex flex-col p-6 animate-fade-in">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold italic">INFORME <span class="text-blue-500">AI</span></h2>
+            <button onclick="document.getElementById('aiModal').classList.add('hidden')" class="text-gray-400"><i class="fa-solid fa-xmark text-2xl"></i></button>
         </div>
-
-        <!-- Live Metrics Grid -->
-        <div class="grid grid-cols-3 gap-3 p-4">
-            <div class="hud-stat rounded-2xl p-3 flex flex-col items-center justify-center">
-                <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Rodilla</span>
-                <span id="valKnee" class="text-2xl font-black text-blue-400 font-mono">---°</span>
+        <div class="flex-grow overflow-y-auto">
+            <div class="bg-slate-800 p-4 rounded-xl border-l-4 border-blue-500 mb-4">
+                <h4 class="font-bold text-blue-400 text-xs mb-1">RESUMEN</h4>
+                <p id="aiFeedbackText" class="text-sm text-gray-200">Analizando...</p>
             </div>
-            <div class="hud-stat rounded-2xl p-3 flex flex-col items-center justify-center">
-                <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Cadera</span>
-                <span id="valHip" class="text-2xl font-black text-purple-400 font-mono">---°</span>
-            </div>
-            <div class="hud-stat rounded-2xl p-3 flex flex-col items-center justify-center border-l-2 border-green-500">
-                <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Fase</span>
-                <span id="valPhase" class="text-xs font-bold text-white uppercase mt-1">Standby</span>
-            </div>
+            <div id="aiFaultsList" class="space-y-2"></div>
         </div>
-
-        <!-- Main Action Button -->
-        <div class="flex-grow flex items-center justify-center pb-6">
-            <button id="btnRecord" class="w-20 h-20 rounded-full border-4 border-gray-600 flex items-center justify-center transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                <div id="recInner" class="w-16 h-16 bg-red-500 rounded-full transition-all"></div>
-            </button>
-        </div>
+        <button onclick="document.getElementById('aiModal').classList.add('hidden')" class="w-full bg-slate-700 py-4 rounded-xl font-bold mt-4">Cerrar</button>
     </div>
 
-    <!-- 4. AI REPORT MODAL (Hidden by default) -->
-    <div id="reportModal" class="fixed inset-0 z-50 bg-black/90 hidden flex flex-col">
-        <div class="flex justify-between items-center p-6 border-b border-gray-800">
-            <h2 class="text-xl font-bold italic">ANÁLISIS <span class="text-blue-500">AI</span></h2>
-            <button id="btnCloseReport" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-2xl"></i></button>
-        </div>
-        
-        <div class="flex-grow overflow-y-auto p-6 report-panel">
-            <!-- Score Header -->
-            <div class="flex items-center gap-4 mb-8">
-                <div class="relative w-20 h-20">
-                    <svg class="w-full h-full transform -rotate-90">
-                        <circle cx="40" cy="40" r="36" stroke="#374151" stroke-width="8" fill="transparent"/>
-                        <circle id="scoreCircle" cx="40" cy="40" r="36" stroke="#3b82f6" stroke-width="8" fill="transparent" stroke-dasharray="226" stroke-dashoffset="50" stroke-linecap="round"/>
-                    </svg>
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <span id="scoreText" class="text-xl font-black">8.5</span>
-                    </div>
-                </div>
-                <div>
-                    <h3 class="font-bold text-lg">Puntuación Técnica</h3>
-                    <p class="text-sm text-gray-400">Basado en biomecánica</p>
-                </div>
-            </div>
-
-            <!-- AI Text Analysis -->
-            <div class="space-y-4">
-                <div class="bg-gray-800 p-4 rounded-xl border-l-4 border-blue-500">
-                    <h4 class="font-bold text-blue-400 text-sm mb-1"><i class="fa-solid fa-robot"></i> OBSERVACIÓN PRINCIPAL</h4>
-                    <p id="aiMainFeedback" class="text-sm leading-relaxed text-gray-200">
-                        Analizando tu video...
-                    </p>
-                </div>
-
-                <h4 class="font-bold text-gray-400 text-xs uppercase tracking-wider mt-6 mb-2">Detalles Detectados</h4>
-                <div id="faultsList" class="space-y-2">
-                    <!-- Fault Items inserted via JS -->
-                </div>
-            </div>
-        </div>
-
-        <div class="p-4 border-t border-gray-800 bg-gray-900">
-            <button id="btnRetry" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-900/50 transition">
-                GRABAR OTRO
-            </button>
-        </div>
-    </div>
-
-    <!-- LOGIC -->
     <script>
-        // --- CONFIG & STATE ---
-        const video = document.getElementById('inputVideo');
-        const canvas = document.getElementById('outputCanvas');
-        const ctx = canvas.getContext('2d');
-        let currentStream = null;
-        let poseModel = null;
-        let isCameraActive = false;
-        
-        // Logic State
-        let isRecording = false;
-        let recordingChunks = [];
-        let mediaRecorder = null;
-        
-        // AI Analysis State
-        let frameData = []; // Store angles per frame
-        let currentPhase = 'start'; // start, eccentric (bajada), bottom, concentric (subida), finish
-        let minHipHeight = 1.0; // Normalized 0-1
-        let maxKneeFlexion = 0;
-        let lowestPointDetected = false;
-
-        // --- MEDIAPIPE SETUP ---
-        async function initPose() {
-            poseModel = new Pose({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`});
-            poseModel.setOptions({
-                modelComplexity: 1,
-                smoothLandmarks: true,
-                minDetectionConfidence: 0.6,
-                minTrackingConfidence: 0.6
-            });
-            poseModel.onResults(onResults);
+        // --- APP LOGIC ---
+        const app = {
+            mode: null, // 'AI', 'PATH', 'COMPARE'
+            isCameraActive: false,
+            isRecording: false,
+            mediaRecorder: null,
+            recordedChunks: [],
+            pose: null,
+            barPath: [],
+            frameData: [],
             
-            // Camera setup
-            const camera = new Camera(video, {
-                onFrame: async () => {
-                    await poseModel.send({image: video});
-                },
-                width: 1280,
-                height: 720
-            });
-            // Don't start automatically, wait for user
-        }
-
-        // --- MAIN LOOP ---
-        function onResults(results) {
-            // Resize canvas to match video
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            if (!results.poseLandmarks) return;
-
-            // Draw Skeleton (Minimalist Style)
-            drawSkeleton(results.poseLandmarks);
-
-            // Compute Physics
-            const analysis = analyzeFrame(results.poseLandmarks);
+            // DOM Elements
+            video: document.getElementById('inputVideo'),
+            canvas: document.getElementById('outputCanvas'),
+            ctx: document.getElementById('outputCanvas').getContext('2d'),
             
-            // Update HUD
-            document.getElementById('valKnee').innerText = Math.round(analysis.kneeAngle) + "°";
-            document.getElementById('valHip').innerText = Math.round(analysis.hipAngle) + "°";
-            document.getElementById('valPhase').innerText = analysis.phase;
-
-            // Store Data if Recording
-            if (isRecording) {
-                frameData.push(analysis);
-                visualizeLiveFeedback(analysis);
-            }
-        }
-
-        function drawSkeleton(landmarks) {
-            // Draw clean lines
-            drawConnectors(ctx, landmarks, POSE_CONNECTIONS, {color: 'rgba(255, 255, 255, 0.4)', lineWidth: 2});
-            // Draw Key Joints only
-            const keyPoints = [11,12, 23,24, 25,26, 27,28]; // Shoulders, Hips, Knees, Ankles
-            keyPoints.forEach(idx => {
-                const p = landmarks[idx];
-                ctx.beginPath();
-                ctx.arc(p.x * canvas.width, p.y * canvas.height, 4, 0, 2 * Math.PI);
-                ctx.fillStyle = '#3b82f6';
-                ctx.fill();
-            });
-        }
-
-        // --- BIOMECHANICS ENGINE (The "AI") ---
-        function analyzeFrame(landmarks) {
-            // Coordinates (using right side for calculation, assume profile)
-            // Ideally, detect which side is visible. Defaulting to Right side (indices 12, 24, 26, 28)
-            const shoulder = landmarks[12];
-            const hip = landmarks[24];
-            const knee = landmarks[26];
-            const ankle = landmarks[28];
-
-            if(!shoulder || !hip || !knee || !ankle) return { kneeAngle: 0, hipAngle: 0, phase: '---' };
-
-            // Calculate Angles
-            const kneeAngle = calculateAngle(hip, knee, ankle);
-            const hipAngle = calculateAngle(shoulder, hip, knee);
-            
-            // Phase Detection (Simplified)
-            // Normalized Y: 0 is top, 1 is bottom
-            let phase = currentPhase;
-            const hipHeight = hip.y;
-
-            if (!isRecording) {
-                phase = "ESPERANDO";
-            } else {
-                if (hipHeight > minHipHeight) minHipHeight = hipHeight; // Track lowest point (inverted Y)
-
-                // Logic dependent on Exercise (Default SQUAT logic)
-                if (frameData.length < 10) phase = "START";
-                else {
-                    const prevHip = frameData[frameData.length-5]?.hipY || hipHeight;
-                    const delta = hipHeight - prevHip;
-                    
-                    if (delta > 0.005) phase = "BAJANDO"; // Y increasing = going down
-                    else if (delta < -0.005) phase = "SUBIENDO"; // Y decreasing = going up
-                    else phase = "FONDO/TOP";
-                }
-            }
-            
-            return {
-                timestamp: Date.now(),
-                kneeAngle,
-                hipAngle,
-                hipY: hipHeight,
-                phase
-            };
-        }
-
-        function calculateAngle(a, b, c) {
-            const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
-            let angle = Math.abs(radians * 180.0 / Math.PI);
-            if (angle > 180.0) angle = 360 - angle;
-            return angle;
-        }
-
-        // --- POST-LIFT AI GENERATION ---
-        function generateReport() {
-            const exercise = document.getElementById('exerciseType').value;
-            let faults = [];
-            let score = 10;
-            let mainFeedback = "";
-
-            // Find lowest depth (max Hip Y)
-            const maxDepthFrame = frameData.reduce((prev, current) => (prev.hipY > current.hipY) ? prev : current);
-            const minKneeAngle = frameData.reduce((min, p) => p.kneeAngle < min ? p.kneeAngle : min, 180);
-
-            // --- RULE ENGINE ---
-            
-            // 1. DEPTH CHECK (Squat & Clean)
-            if (exercise === 'SQUAT' || exercise === 'CLEAN' || exercise === 'SNATCH') {
-                if (maxDepthFrame.kneeAngle > 105) {
-                    faults.push({icon: 'fa-arrow-down', text: 'Profundidad Insuficiente: No rompiste el paralelo.', severity: 'high'});
-                    score -= 3;
-                } else if (maxDepthFrame.kneeAngle > 85) {
-                    faults.push({icon: 'fa-check', text: 'Profundidad aceptable (Paralelo)', severity: 'good'});
-                } else {
-                    faults.push({icon: 'fa-star', text: 'Excelente profundidad (Profunda)', severity: 'good'});
-                }
-            }
-
-            // 2. BACK ANGLE (Torso collapse)
-            // Simplified: If hip angle gets too acute (< 45) it implies folding over
-            const minHipAngle = frameData.reduce((min, p) => p.hipAngle < min ? p.hipAngle : min, 180);
-            if (minHipAngle < 50) {
-                faults.push({icon: 'fa-triangle-exclamation', text: 'Torso Inclinado: Tu pecho colapsó hacia adelante.', severity: 'medium'});
-                score -= 2;
-            }
-
-            // 3. SPEED / EXPLOSIVENESS (Time in concentric)
-            // TODO: Calculate time from bottom to top
-
-            // GENERATE NATURAL TEXT
-            if (score >= 9) mainFeedback = "¡Levantamiento sólido! La biomecánica fue casi perfecta. Mantuviste buena tensión y alcanzaste el rango de movimiento completo.";
-            else if (score >= 7) mainFeedback = "Buen intento, pero hay fugas de energía. Tu principal prioridad debe ser corregir la postura en el punto de máxima dificultad.";
-            else mainFeedback = "Detectamos fallos técnicos importantes. Reduce el peso y enfócate en la técnica antes de subir carga para evitar lesiones.";
-
-            // RENDER REPORT
-            document.getElementById('aiMainFeedback').innerText = mainFeedback;
-            document.getElementById('scoreText').innerText = score;
-            
-            // Update circle stroke (approx)
-            const dashOffset = 226 - (226 * (score/10));
-            document.getElementById('scoreCircle').style.strokeDashoffset = dashOffset;
-            document.getElementById('scoreCircle').style.stroke = score < 6 ? '#ef4444' : (score < 8 ? '#eab308' : '#3b82f6');
-
-            const faultsContainer = document.getElementById('faultsList');
-            faultsContainer.innerHTML = '';
-            faults.forEach(fault => {
-                const color = fault.severity === 'high' ? 'text-red-400' : (fault.severity === 'good' ? 'text-green-400' : 'text-yellow-400');
-                const html = `
-                    <div class="flex items-center gap-3 bg-gray-800/50 p-3 rounded-lg">
-                        <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center ${color}">
-                            <i class="fa-solid ${fault.icon}"></i>
-                        </div>
-                        <span class="text-sm font-medium text-gray-300">${fault.text}</span>
-                    </div>
-                `;
-                faultsContainer.insertAdjacentHTML('beforeend', html);
-            });
-
-            // Show Modal
-            document.getElementById('reportModal').classList.remove('hidden');
-        }
-
-        function visualizeLiveFeedback(data) {
-            // Simple visual cues during recording
-            const el = document.getElementById('liveFeedback');
-            const txt = document.getElementById('feedbackText');
-            
-            if (data.kneeAngle < 90 && data.phase === 'BAJANDO') {
-                el.style.opacity = '1';
-                txt.innerText = "¡PROFUNDO!";
-                txt.style.color = '#4ade80';
-            } else {
-                el.style.opacity = '0';
-            }
-        }
-
-        // --- CAMERA & UI HANDLING ---
-
-        document.getElementById('btnCamera').addEventListener('click', async () => {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment", width: 1280, height: 720 }, 
-                    audio: false 
+            init: function() {
+                // Initialize MediaPipe
+                this.pose = new Pose({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`});
+                this.pose.setOptions({
+                    modelComplexity: 1,
+                    smoothLandmarks: true,
+                    minDetectionConfidence: 0.5,
+                    minTrackingConfidence: 0.5
                 });
-                video.srcObject = stream;
-                video.play();
-                
-                // Hide Start Screen
-                document.getElementById('startScreen').classList.add('hidden');
-                document.getElementById('btnRecord').disabled = false;
-                
-                // Start MediaPipe loop
-                initPose();
-                cameraLoop();
-                
-            } catch (e) {
-                alert("Error cámara: " + e.message);
-            }
-        });
+                this.pose.onResults(this.onPoseResults.bind(this));
+            },
 
-        document.getElementById('fileInput').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const url = URL.createObjectURL(file);
-                video.src = url;
-                video.srcObject = null;
-                video.classList.remove('scale-x-[-1]'); // Don't mirror uploaded videos
-                canvas.classList.remove('scale-x-[-1]');
+            setMode: function(newMode) {
+                this.mode = newMode;
+                document.getElementById('mainMenu').classList.add('hide');
+                document.getElementById('workspaceHeader').classList.remove('hide');
                 
-                document.getElementById('startScreen').classList.add('hidden');
-                document.getElementById('btnRecord').disabled = false; // Allow "Record/Analyze" of uploaded video playback
+                // Reset Views
+                document.getElementById('cameraWorkspace').classList.add('hide');
+                document.getElementById('compareWorkspace').classList.add('hide');
+                document.getElementById('exerciseSelectorWrapper').classList.add('hide');
                 
-                initPose();
-                
-                video.onloadeddata = () => {
-                    video.play();
-                    cameraLoop();
+                // Update Title
+                const titles = { 'AI': 'Coach Biomecánico', 'PATH': 'Rastreo de Barra', 'COMPARE': 'Comparador' };
+                document.getElementById('workspaceTitle').innerText = titles[newMode];
+
+                if (newMode === 'AI' || newMode === 'PATH') {
+                    document.getElementById('cameraWorkspace').classList.remove('hide');
+                    document.getElementById('camStartOverlay').classList.remove('hide');
+                    
+                    if (newMode === 'AI') {
+                        document.getElementById('exerciseSelectorWrapper').classList.remove('hide');
+                        document.getElementById('camInstructions').innerText = "Coloca el móvil de lado (perfil) para que la IA mida los ángulos correctamente.";
+                    } else {
+                        document.getElementById('camInstructions').innerText = "Graba de perfil. La línea verde seguirá tus muñecas.";
+                    }
+                } else {
+                    // Compare Mode
+                    document.getElementById('compareWorkspace').classList.remove('hide');
                 }
-            }
-        });
+            },
 
-        // Loop for Pose Detection
-        async function cameraLoop() {
-            if (!video.paused && !video.ended) {
-                await poseModel.send({image: video});
-                requestAnimationFrame(cameraLoop);
-            }
-        }
+            goHome: function() {
+                location.reload(); // Simple reset for stability
+            },
 
-        // Recording Logic
-        document.getElementById('btnRecord').addEventListener('click', () => {
-            const btn = document.getElementById('btnRecord');
-            const inner = document.getElementById('recInner');
+            // --- CAMERA & VIDEO HANDLING ---
+            startCamera: async function() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: 'environment', width: 1280, height: 720 }, 
+                        audio: false 
+                    });
+                    this.video.srcObject = stream;
+                    this.video.play();
+                    this.isCameraActive = true;
+                    document.getElementById('camStartOverlay').classList.add('hide');
+                    
+                    // Show specific HUDs
+                    if (this.mode === 'AI') document.getElementById('hudAI').classList.remove('hide');
+                    if (this.mode === 'PATH') {
+                        document.getElementById('hudPath').classList.remove('hide');
+                        document.getElementById('hudPathBottom').classList.remove('hide');
+                    }
+
+                    this.processFrame();
+                } catch (e) {
+                    alert("Error cámara: " + e.message);
+                }
+            },
             
-            if (!isRecording) {
-                // START
-                isRecording = true;
-                frameData = []; // Reset analysis data
-                btn.classList.add('pulse-ring');
-                inner.classList.replace('rounded-full', 'rounded-md');
-                inner.classList.add('scale-50');
+            handleFileUpload: function(input) {
+                const file = input.files[0];
+                if(file) {
+                    const url = URL.createObjectURL(file);
+                    this.video.srcObject = null;
+                    this.video.src = url;
+                    this.video.classList.remove('scale-x-[-1]'); // Don't mirror uploaded files
+                    this.canvas.classList.remove('scale-x-[-1]');
+                    
+                    document.getElementById('camStartOverlay').classList.add('hide');
+                    if (this.mode === 'AI') document.getElementById('hudAI').classList.remove('hide');
+                    if (this.mode === 'PATH') {
+                        document.getElementById('hudPath').classList.remove('hide');
+                        document.getElementById('hudPathBottom').classList.remove('hide');
+                    }
+                    
+                    this.video.play();
+                    this.processFrame();
+                }
+            },
+
+            processFrame: async function() {
+                if (this.video.paused || this.video.ended) {
+                    requestAnimationFrame(this.processFrame.bind(this));
+                    return;
+                }
+                await this.pose.send({image: this.video});
+                requestAnimationFrame(this.processFrame.bind(this));
+            },
+
+            // --- MEDIAPIPE LOGIC ---
+            onPoseResults: function(results) {
+                this.canvas.width = this.video.videoWidth;
+                this.canvas.height = this.video.videoHeight;
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                if (!results.poseLandmarks) return;
+                const lm = results.poseLandmarks;
+
+                if (this.mode === 'AI') {
+                    this.renderAI(lm);
+                } else if (this.mode === 'PATH') {
+                    this.renderPath(lm);
+                }
+            },
+
+            // LOGIC FOR MODE: PATH
+            renderPath: function(lm) {
+                // Average Wrist Position
+                const leftWrist = lm[15];
+                const rightWrist = lm[16];
                 
-                // Reset metrics
-                minHipHeight = 1.0; 
+                if (leftWrist.visibility > 0.5 && rightWrist.visibility > 0.5) {
+                    const x = (leftWrist.x + rightWrist.x) / 2 * this.canvas.width;
+                    const y = (leftWrist.y + rightWrist.y) / 2 * this.canvas.height;
+                    this.barPath.push({x, y});
+                }
+
+                // Draw Path
+                if (this.barPath.length > 1) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(this.barPath[0].x, this.barPath[0].y);
+                    for (let i = 1; i < this.barPath.length; i++) {
+                        this.ctx.lineTo(this.barPath[i].x, this.barPath[i].y);
+                    }
+                    this.ctx.strokeStyle = '#22c55e'; // Green
+                    this.ctx.lineWidth = 4;
+                    this.ctx.lineCap = 'round';
+                    this.ctx.stroke();
+                }
                 
-            } else {
-                // STOP & ANALYZE
-                isRecording = false;
-                btn.classList.remove('pulse-ring');
-                inner.classList.replace('rounded-md', 'rounded-full');
-                inner.classList.remove('scale-50');
+                // Draw current point
+                if (this.barPath.length > 0) {
+                    const last = this.barPath[this.barPath.length - 1];
+                    this.ctx.beginPath();
+                    this.ctx.arc(last.x, last.y, 8, 0, 2 * Math.PI);
+                    this.ctx.fillStyle = '#fff';
+                    this.ctx.fill();
+                }
+            },
+            
+            clearPath: function() {
+                this.barPath = [];
+            },
+
+            // LOGIC FOR MODE: AI
+            renderAI: function(lm) {
+                // 1. Draw Skeleton
+                drawConnectors(this.ctx, lm, POSE_CONNECTIONS, {color: 'rgba(255,255,255,0.2)', lineWidth: 2});
                 
-                // Generate AI Report
-                setTimeout(() => {
-                    generateReport();
-                }, 500);
+                // 2. Calc Stats
+                const shoulder = lm[12];
+                const hip = lm[24];
+                const knee = lm[26];
+                const ankle = lm[28];
+                
+                if (hip && knee && ankle) {
+                    const kneeAngle = this.calculateAngle(hip, knee, ankle);
+                    const hipAngle = this.calculateAngle(shoulder, hip, knee);
+                    
+                    // Update HUD
+                    document.getElementById('valKnee').innerText = Math.round(kneeAngle) + "°";
+                    document.getElementById('valHip').innerText = Math.round(hipAngle) + "°";
+                    
+                    // Collect Data if recording
+                    if (this.isRecording) {
+                        this.frameData.push({kneeAngle, hipAngle, hipY: hip.y});
+                    }
+                }
+            },
+
+            calculateAngle: function(a, b, c) {
+                const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+                let angle = Math.abs(radians * 180.0 / Math.PI);
+                if (angle > 180.0) angle = 360 - angle;
+                return angle;
+            },
+
+            toggleRecording: function() {
+                const btn = document.getElementById('recInnerAI');
+                if (!this.isRecording) {
+                    this.isRecording = true;
+                    this.frameData = [];
+                    btn.classList.replace('rounded-full', 'rounded-sm');
+                    btn.classList.add('scale-50');
+                    document.getElementById('valPhase').innerText = "GRABANDO...";
+                    document.getElementById('valPhase').className = "font-bold text-xs uppercase mt-1 text-red-500 animate-pulse";
+                } else {
+                    this.isRecording = false;
+                    btn.classList.replace('rounded-sm', 'rounded-full');
+                    btn.classList.remove('scale-50');
+                    document.getElementById('valPhase').innerText = "PROCESANDO";
+                    document.getElementById('valPhase').className = "font-bold text-xs uppercase mt-1 text-white";
+                    
+                    this.analyzeLift();
+                }
+            },
+
+            analyzeLift: function() {
+                const type = document.getElementById('exerciseSelect').value;
+                let faults = [];
+                let msg = "";
+
+                // Logic: Exercise Groups
+                const isSquatVariant = type.includes('SQUAT') || type.includes('CLEAN') || type.includes('SNATCH');
+                const isPowerVariant = type.includes('POWER');
+                const isMuscleVariant = type.includes('MUSCLE');
+                const isPush = type.includes('JERK') || type.includes('PRESS');
+
+                // Simple Analysis Logic
+                if (this.frameData.length < 20) {
+                    msg = "Video demasiado corto.";
+                } else {
+                    // Find lowest point (max Hip Y - inverted in logic? MediaPipe Y 0 is top, 1 is bottom)
+                    // So higher Y value means lower physical position
+                    const deepest = this.frameData.reduce((prev, curr) => prev.hipY > curr.hipY ? prev : curr);
+                    
+                    // CHECK 1: DEPTH (Sentadillas y Recepciones completas)
+                    if (isSquatVariant && !isPowerVariant && !isMuscleVariant && !isPush) {
+                        // Angle < 100 usually means parallel or below depending on camera
+                        if (deepest.kneeAngle > 100) {
+                            faults.push("No rompiste el paralelo (Profundidad insuficiente).");
+                        } else {
+                            faults.push("¡Buena profundidad alcanzada!");
+                        }
+                    }
+
+                    // CHECK 2: POWER VARIANT (Debe ser ALTA)
+                    if (isPowerVariant) {
+                        if (deepest.kneeAngle < 90) {
+                            faults.push("Bajaste demasiado para ser Power (recepcionaste profundo).");
+                        } else {
+                            faults.push("Buena recepción alta (Power).");
+                        }
+                    }
+                    
+                    msg = "Análisis completado para " + type.replace(/_/g, " ");
+                }
+
+                // Show Modal
+                document.getElementById('aiFeedbackText').innerText = msg;
+                const list = document.getElementById('aiFaultsList');
+                list.innerHTML = "";
+                faults.forEach(f => {
+                    list.innerHTML += `<div class="bg-slate-700/50 p-2 rounded text-sm text-gray-300"><i class="fa-solid fa-circle-info mr-2 text-blue-400"></i>${f}</div>`;
+                });
+                document.getElementById('aiModal').classList.remove('hidden');
+            },
+
+            // --- COMPARE MODE LOGIC ---
+            loadCompareVideo: function(side, input) {
+                const file = input.files[0];
+                if (!file) return;
+                const vid = side === 'left' ? document.getElementById('vidLeft') : document.getElementById('vidRight');
+                const overlay = side === 'left' ? document.getElementById('overlayLeft') : document.getElementById('overlayRight');
+                
+                vid.src = URL.createObjectURL(file);
+                overlay.classList.add('hide');
+            },
+
+            toggleComparePlay: function() {
+                const v1 = document.getElementById('vidLeft');
+                const v2 = document.getElementById('vidRight');
+                const icon = document.getElementById('btnComparePlayIcon');
+
+                if (v1.paused) {
+                    v1.play();
+                    v2.play();
+                    icon.classList.replace('fa-play', 'fa-pause');
+                } else {
+                    v1.pause();
+                    v2.pause();
+                    icon.classList.replace('fa-pause', 'fa-play');
+                }
+            },
+
+            setSpeed: function(val) {
+                document.getElementById('vidLeft').playbackRate = val;
+                document.getElementById('vidRight').playbackRate = val;
+                document.getElementById('speedVal').innerText = val + "x";
+            },
+
+            seekCompare: function(seconds) {
+                const v1 = document.getElementById('vidLeft');
+                const v2 = document.getElementById('vidRight');
+                v1.currentTime += seconds;
+                v2.currentTime += seconds;
             }
-        });
+        };
 
-        document.getElementById('btnCloseReport').addEventListener('click', () => {
-            document.getElementById('reportModal').classList.add('hidden');
-        });
-
-        document.getElementById('btnRetry').addEventListener('click', () => {
-            document.getElementById('reportModal').classList.add('hidden');
-            // Ready to record again
-        });
+        // Init
+        app.init();
 
     </script>
 </body>
