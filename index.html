@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Haltero AI Coach Pro</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- MediaPipe -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+
+    <style>
+        body { 
+            background-color: #111827; 
+            color: #f3f4f6; 
+            font-family: 'Roboto', sans-serif; 
+            overscroll-behavior: none;
+        }
+        
+        /* Video Container - Cinematic Feel */
+        .viewport-container {
+            position: relative;
+            width: 100%;
+            height: 65vh; /* Altura principal para el video */
+            background: #000;
+            overflow: hidden;
+            border-bottom: 1px solid #374151;
+        }
+
+        video, canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+        }
+
+        /* UI Overlays */
+        .overlay-gradient {
+            background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 20%, rgba(0,0,0,0) 80%, rgba(0,0,0,0.8) 100%);
+        }
+
+        .hud-stat {
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Report Modal Animation */
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .report-panel {
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Custom Scrollbar */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Recording Pulse */
+        .pulse-ring {
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            animation: pulse-red 2s infinite;
+        }
+        @keyframes pulse-red {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <!-- 1. TOP BAR (Transparent Overlay) -->
+    <div class="fixed top-0 left-0 w-full z-20 p-4 flex justify-between items-start overlay-gradient h-24 pointer-events-none">
+        <div class="pointer-events-auto">
+            <h1 class="text-lg font-black italic tracking-tighter text-white">HALTERO<span class="text-blue-500">AI</span></h1>
+            <div class="flex items-center gap-2 mt-1">
+                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                <span class="text-xs text-gray-300 font-mono tracking-wide">MOTOR BIOMECÁNICO ACTIVO</span>
+            </div>
+        </div>
+        
+        <!-- Exercise Selector -->
+        <div class="pointer-events-auto bg-gray-800 rounded-lg p-1 border border-gray-700 shadow-xl">
+            <select id="exerciseType" class="bg-transparent text-xs font-bold text-white outline-none px-2 py-1">
+                <option value="SQUAT">SENTADILLA</option>
+                <option value="CLEAN">CLEAN / CARGADA</option>
+                <option value="SNATCH">SNATCH / ARRANCADA</option>
+                <option value="JERK">JERK / ENVIÓN</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- 2. MAIN VIEWPORT (Video & AR) -->
+    <div class="viewport-container shadow-2xl">
+        <video id="inputVideo" playsinline muted class="transform scale-x-[-1]"></video> <!-- Mirrored for selfie cam -->
+        <canvas id="outputCanvas" class="transform scale-x-[-1]"></canvas>
+        
+        <!-- Live Feedback Toast (Dynamic) -->
+        <div id="liveFeedback" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none transition-opacity duration-200 opacity-0">
+            <div class="bg-black/70 backdrop-blur-md px-6 py-3 rounded-xl border border-white/20">
+                <span id="feedbackText" class="text-2xl font-black text-white italic uppercase tracking-widest">GOOD LIFT</span>
+            </div>
+        </div>
+
+        <!-- Start Screen Overlay -->
+        <div id="startScreen" class="absolute inset-0 bg-gray-900 z-30 flex flex-col items-center justify-center p-6 text-center">
+            <div class="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-blue-500/30">
+                <i class="fa-solid fa-camera text-4xl text-white"></i>
+            </div>
+            <h2 class="text-2xl font-bold mb-2">Analizador de Técnica</h2>
+            <p class="text-gray-400 text-sm mb-8 max-w-xs">Coloca el móvil en el suelo o trípode. Asegúrate de que se vea todo tu cuerpo de perfil o 45°.</p>
+            
+            <div class="flex gap-4 w-full max-w-sm">
+                <button id="btnCamera" class="flex-1 bg-white text-black py-4 rounded-xl font-bold hover:bg-gray-100 transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-video"></i> Cámara
+                </button>
+                <button class="relative flex-1 bg-gray-800 border border-gray-700 text-white py-4 rounded-xl font-bold hover:bg-gray-700 transition flex items-center justify-center gap-2 overflow-hidden">
+                    <i class="fa-solid fa-upload"></i> Subir Video
+                    <input type="file" id="fileInput" accept="video/*" class="absolute inset-0 opacity-0 cursor-pointer">
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. CONTROL CENTER (Bottom) -->
+    <div class="flex-grow bg-gray-900 z-10 flex flex-col relative rounded-t-3xl -mt-6 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] border-t border-gray-800">
+        
+        <!-- Drag Handle -->
+        <div class="w-full flex justify-center pt-3 pb-1">
+            <div class="w-12 h-1 bg-gray-700 rounded-full"></div>
+        </div>
+
+        <!-- Live Metrics Grid -->
+        <div class="grid grid-cols-3 gap-3 p-4">
+            <div class="hud-stat rounded-2xl p-3 flex flex-col items-center justify-center">
+                <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Rodilla</span>
+                <span id="valKnee" class="text-2xl font-black text-blue-400 font-mono">---°</span>
+            </div>
+            <div class="hud-stat rounded-2xl p-3 flex flex-col items-center justify-center">
+                <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Cadera</span>
+                <span id="valHip" class="text-2xl font-black text-purple-400 font-mono">---°</span>
+            </div>
+            <div class="hud-stat rounded-2xl p-3 flex flex-col items-center justify-center border-l-2 border-green-500">
+                <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Fase</span>
+                <span id="valPhase" class="text-xs font-bold text-white uppercase mt-1">Standby</span>
+            </div>
+        </div>
+
+        <!-- Main Action Button -->
+        <div class="flex-grow flex items-center justify-center pb-6">
+            <button id="btnRecord" class="w-20 h-20 rounded-full border-4 border-gray-600 flex items-center justify-center transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <div id="recInner" class="w-16 h-16 bg-red-500 rounded-full transition-all"></div>
+            </button>
+        </div>
+    </div>
+
+    <!-- 4. AI REPORT MODAL (Hidden by default) -->
+    <div id="reportModal" class="fixed inset-0 z-50 bg-black/90 hidden flex flex-col">
+        <div class="flex justify-between items-center p-6 border-b border-gray-800">
+            <h2 class="text-xl font-bold italic">ANÁLISIS <span class="text-blue-500">AI</span></h2>
+            <button id="btnCloseReport" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-2xl"></i></button>
+        </div>
+        
+        <div class="flex-grow overflow-y-auto p-6 report-panel">
+            <!-- Score Header -->
+            <div class="flex items-center gap-4 mb-8">
+                <div class="relative w-20 h-20">
+                    <svg class="w-full h-full transform -rotate-90">
+                        <circle cx="40" cy="40" r="36" stroke="#374151" stroke-width="8" fill="transparent"/>
+                        <circle id="scoreCircle" cx="40" cy="40" r="36" stroke="#3b82f6" stroke-width="8" fill="transparent" stroke-dasharray="226" stroke-dashoffset="50" stroke-linecap="round"/>
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <span id="scoreText" class="text-xl font-black">8.5</span>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg">Puntuación Técnica</h3>
+                    <p class="text-sm text-gray-400">Basado en biomecánica</p>
+                </div>
+            </div>
+
+            <!-- AI Text Analysis -->
+            <div class="space-y-4">
+                <div class="bg-gray-800 p-4 rounded-xl border-l-4 border-blue-500">
+                    <h4 class="font-bold text-blue-400 text-sm mb-1"><i class="fa-solid fa-robot"></i> OBSERVACIÓN PRINCIPAL</h4>
+                    <p id="aiMainFeedback" class="text-sm leading-relaxed text-gray-200">
+                        Analizando tu video...
+                    </p>
+                </div>
+
+                <h4 class="font-bold text-gray-400 text-xs uppercase tracking-wider mt-6 mb-2">Detalles Detectados</h4>
+                <div id="faultsList" class="space-y-2">
+                    <!-- Fault Items inserted via JS -->
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4 border-t border-gray-800 bg-gray-900">
+            <button id="btnRetry" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-900/50 transition">
+                GRABAR OTRO
+            </button>
+        </div>
+    </div>
+
+    <!-- LOGIC -->
+    <script>
+        // --- CONFIG & STATE ---
+        const video = document.getElementById('inputVideo');
+        const canvas = document.getElementById('outputCanvas');
+        const ctx = canvas.getContext('2d');
+        let currentStream = null;
+        let poseModel = null;
+        let isCameraActive = false;
+        
+        // Logic State
+        let isRecording = false;
+        let recordingChunks = [];
+        let mediaRecorder = null;
+        
+        // AI Analysis State
+        let frameData = []; // Store angles per frame
+        let currentPhase = 'start'; // start, eccentric (bajada), bottom, concentric (subida), finish
+        let minHipHeight = 1.0; // Normalized 0-1
+        let maxKneeFlexion = 0;
+        let lowestPointDetected = false;
+
+        // --- MEDIAPIPE SETUP ---
+        async function initPose() {
+            poseModel = new Pose({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`});
+            poseModel.setOptions({
+                modelComplexity: 1,
+                smoothLandmarks: true,
+                minDetectionConfidence: 0.6,
+                minTrackingConfidence: 0.6
+            });
+            poseModel.onResults(onResults);
+            
+            // Camera setup
+            const camera = new Camera(video, {
+                onFrame: async () => {
+                    await poseModel.send({image: video});
+                },
+                width: 1280,
+                height: 720
+            });
+            // Don't start automatically, wait for user
+        }
+
+        // --- MAIN LOOP ---
+        function onResults(results) {
+            // Resize canvas to match video
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (!results.poseLandmarks) return;
+
+            // Draw Skeleton (Minimalist Style)
+            drawSkeleton(results.poseLandmarks);
+
+            // Compute Physics
+            const analysis = analyzeFrame(results.poseLandmarks);
+            
+            // Update HUD
+            document.getElementById('valKnee').innerText = Math.round(analysis.kneeAngle) + "°";
+            document.getElementById('valHip').innerText = Math.round(analysis.hipAngle) + "°";
+            document.getElementById('valPhase').innerText = analysis.phase;
+
+            // Store Data if Recording
+            if (isRecording) {
+                frameData.push(analysis);
+                visualizeLiveFeedback(analysis);
+            }
+        }
+
+        function drawSkeleton(landmarks) {
+            // Draw clean lines
+            drawConnectors(ctx, landmarks, POSE_CONNECTIONS, {color: 'rgba(255, 255, 255, 0.4)', lineWidth: 2});
+            // Draw Key Joints only
+            const keyPoints = [11,12, 23,24, 25,26, 27,28]; // Shoulders, Hips, Knees, Ankles
+            keyPoints.forEach(idx => {
+                const p = landmarks[idx];
+                ctx.beginPath();
+                ctx.arc(p.x * canvas.width, p.y * canvas.height, 4, 0, 2 * Math.PI);
+                ctx.fillStyle = '#3b82f6';
+                ctx.fill();
+            });
+        }
+
+        // --- BIOMECHANICS ENGINE (The "AI") ---
+        function analyzeFrame(landmarks) {
+            // Coordinates (using right side for calculation, assume profile)
+            // Ideally, detect which side is visible. Defaulting to Right side (indices 12, 24, 26, 28)
+            const shoulder = landmarks[12];
+            const hip = landmarks[24];
+            const knee = landmarks[26];
+            const ankle = landmarks[28];
+
+            if(!shoulder || !hip || !knee || !ankle) return { kneeAngle: 0, hipAngle: 0, phase: '---' };
+
+            // Calculate Angles
+            const kneeAngle = calculateAngle(hip, knee, ankle);
+            const hipAngle = calculateAngle(shoulder, hip, knee);
+            
+            // Phase Detection (Simplified)
+            // Normalized Y: 0 is top, 1 is bottom
+            let phase = currentPhase;
+            const hipHeight = hip.y;
+
+            if (!isRecording) {
+                phase = "ESPERANDO";
+            } else {
+                if (hipHeight > minHipHeight) minHipHeight = hipHeight; // Track lowest point (inverted Y)
+
+                // Logic dependent on Exercise (Default SQUAT logic)
+                if (frameData.length < 10) phase = "START";
+                else {
+                    const prevHip = frameData[frameData.length-5]?.hipY || hipHeight;
+                    const delta = hipHeight - prevHip;
+                    
+                    if (delta > 0.005) phase = "BAJANDO"; // Y increasing = going down
+                    else if (delta < -0.005) phase = "SUBIENDO"; // Y decreasing = going up
+                    else phase = "FONDO/TOP";
+                }
+            }
+            
+            return {
+                timestamp: Date.now(),
+                kneeAngle,
+                hipAngle,
+                hipY: hipHeight,
+                phase
+            };
+        }
+
+        function calculateAngle(a, b, c) {
+            const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+            let angle = Math.abs(radians * 180.0 / Math.PI);
+            if (angle > 180.0) angle = 360 - angle;
+            return angle;
+        }
+
+        // --- POST-LIFT AI GENERATION ---
+        function generateReport() {
+            const exercise = document.getElementById('exerciseType').value;
+            let faults = [];
+            let score = 10;
+            let mainFeedback = "";
+
+            // Find lowest depth (max Hip Y)
+            const maxDepthFrame = frameData.reduce((prev, current) => (prev.hipY > current.hipY) ? prev : current);
+            const minKneeAngle = frameData.reduce((min, p) => p.kneeAngle < min ? p.kneeAngle : min, 180);
+
+            // --- RULE ENGINE ---
+            
+            // 1. DEPTH CHECK (Squat & Clean)
+            if (exercise === 'SQUAT' || exercise === 'CLEAN' || exercise === 'SNATCH') {
+                if (maxDepthFrame.kneeAngle > 105) {
+                    faults.push({icon: 'fa-arrow-down', text: 'Profundidad Insuficiente: No rompiste el paralelo.', severity: 'high'});
+                    score -= 3;
+                } else if (maxDepthFrame.kneeAngle > 85) {
+                    faults.push({icon: 'fa-check', text: 'Profundidad aceptable (Paralelo)', severity: 'good'});
+                } else {
+                    faults.push({icon: 'fa-star', text: 'Excelente profundidad (Profunda)', severity: 'good'});
+                }
+            }
+
+            // 2. BACK ANGLE (Torso collapse)
+            // Simplified: If hip angle gets too acute (< 45) it implies folding over
+            const minHipAngle = frameData.reduce((min, p) => p.hipAngle < min ? p.hipAngle : min, 180);
+            if (minHipAngle < 50) {
+                faults.push({icon: 'fa-triangle-exclamation', text: 'Torso Inclinado: Tu pecho colapsó hacia adelante.', severity: 'medium'});
+                score -= 2;
+            }
+
+            // 3. SPEED / EXPLOSIVENESS (Time in concentric)
+            // TODO: Calculate time from bottom to top
+
+            // GENERATE NATURAL TEXT
+            if (score >= 9) mainFeedback = "¡Levantamiento sólido! La biomecánica fue casi perfecta. Mantuviste buena tensión y alcanzaste el rango de movimiento completo.";
+            else if (score >= 7) mainFeedback = "Buen intento, pero hay fugas de energía. Tu principal prioridad debe ser corregir la postura en el punto de máxima dificultad.";
+            else mainFeedback = "Detectamos fallos técnicos importantes. Reduce el peso y enfócate en la técnica antes de subir carga para evitar lesiones.";
+
+            // RENDER REPORT
+            document.getElementById('aiMainFeedback').innerText = mainFeedback;
+            document.getElementById('scoreText').innerText = score;
+            
+            // Update circle stroke (approx)
+            const dashOffset = 226 - (226 * (score/10));
+            document.getElementById('scoreCircle').style.strokeDashoffset = dashOffset;
+            document.getElementById('scoreCircle').style.stroke = score < 6 ? '#ef4444' : (score < 8 ? '#eab308' : '#3b82f6');
+
+            const faultsContainer = document.getElementById('faultsList');
+            faultsContainer.innerHTML = '';
+            faults.forEach(fault => {
+                const color = fault.severity === 'high' ? 'text-red-400' : (fault.severity === 'good' ? 'text-green-400' : 'text-yellow-400');
+                const html = `
+                    <div class="flex items-center gap-3 bg-gray-800/50 p-3 rounded-lg">
+                        <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center ${color}">
+                            <i class="fa-solid ${fault.icon}"></i>
+                        </div>
+                        <span class="text-sm font-medium text-gray-300">${fault.text}</span>
+                    </div>
+                `;
+                faultsContainer.insertAdjacentHTML('beforeend', html);
+            });
+
+            // Show Modal
+            document.getElementById('reportModal').classList.remove('hidden');
+        }
+
+        function visualizeLiveFeedback(data) {
+            // Simple visual cues during recording
+            const el = document.getElementById('liveFeedback');
+            const txt = document.getElementById('feedbackText');
+            
+            if (data.kneeAngle < 90 && data.phase === 'BAJANDO') {
+                el.style.opacity = '1';
+                txt.innerText = "¡PROFUNDO!";
+                txt.style.color = '#4ade80';
+            } else {
+                el.style.opacity = '0';
+            }
+        }
+
+        // --- CAMERA & UI HANDLING ---
+
+        document.getElementById('btnCamera').addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "environment", width: 1280, height: 720 }, 
+                    audio: false 
+                });
+                video.srcObject = stream;
+                video.play();
+                
+                // Hide Start Screen
+                document.getElementById('startScreen').classList.add('hidden');
+                document.getElementById('btnRecord').disabled = false;
+                
+                // Start MediaPipe loop
+                initPose();
+                cameraLoop();
+                
+            } catch (e) {
+                alert("Error cámara: " + e.message);
+            }
+        });
+
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                video.src = url;
+                video.srcObject = null;
+                video.classList.remove('scale-x-[-1]'); // Don't mirror uploaded videos
+                canvas.classList.remove('scale-x-[-1]');
+                
+                document.getElementById('startScreen').classList.add('hidden');
+                document.getElementById('btnRecord').disabled = false; // Allow "Record/Analyze" of uploaded video playback
+                
+                initPose();
+                
+                video.onloadeddata = () => {
+                    video.play();
+                    cameraLoop();
+                }
+            }
+        });
+
+        // Loop for Pose Detection
+        async function cameraLoop() {
+            if (!video.paused && !video.ended) {
+                await poseModel.send({image: video});
+                requestAnimationFrame(cameraLoop);
+            }
+        }
+
+        // Recording Logic
+        document.getElementById('btnRecord').addEventListener('click', () => {
+            const btn = document.getElementById('btnRecord');
+            const inner = document.getElementById('recInner');
+            
+            if (!isRecording) {
+                // START
+                isRecording = true;
+                frameData = []; // Reset analysis data
+                btn.classList.add('pulse-ring');
+                inner.classList.replace('rounded-full', 'rounded-md');
+                inner.classList.add('scale-50');
+                
+                // Reset metrics
+                minHipHeight = 1.0; 
+                
+            } else {
+                // STOP & ANALYZE
+                isRecording = false;
+                btn.classList.remove('pulse-ring');
+                inner.classList.replace('rounded-md', 'rounded-full');
+                inner.classList.remove('scale-50');
+                
+                // Generate AI Report
+                setTimeout(() => {
+                    generateReport();
+                }, 500);
+            }
+        });
+
+        document.getElementById('btnCloseReport').addEventListener('click', () => {
+            document.getElementById('reportModal').classList.add('hidden');
+        });
+
+        document.getElementById('btnRetry').addEventListener('click', () => {
+            document.getElementById('reportModal').classList.add('hidden');
+            // Ready to record again
+        });
+
+    </script>
+</body>
+</html>
