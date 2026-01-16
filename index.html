@@ -16,124 +16,67 @@
 
     <style>
         body { background-color: #0f172a; color: #f3f4f6; font-family: 'Roboto', sans-serif; overflow: hidden; }
-        
-        /* Utility */
         .hide { display: none !important; }
         .show { display: flex !important; }
         .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border-top: 1px solid rgba(255,255,255,0.1); }
         
-        /* Camera Viewport */
         .viewport-container { position: relative; width: 100%; height: 100%; overflow: hidden; background: #000; }
         video.cam, canvas.cam { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
         
-        /* Menu Cards */
+        /* Utility class for uploaded videos to fit properly */
+        .object-contain-video { object-fit: contain !important; }
+        
         .menu-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .menu-card:active { transform: scale(0.95); }
 
-        /* Custom Range Slider (Global Speed) */
+        /* Range Sliders */
         input[type=range].speed-slider { -webkit-appearance: none; background: transparent; }
         input[type=range].speed-slider::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #3b82f6; margin-top: -6px; }
         input[type=range].speed-slider::-webkit-slider-runnable-track { width: 100%; height: 4px; background: #475569; border-radius: 2px; }
 
-        /* Timeline Slider (Individual Videos) */
-        input[type=range].timeline {
-            -webkit-appearance: none; 
-            width: 100%; 
-            background: transparent;
-            height: 10px;
-            cursor: pointer;
-        }
-        input[type=range].timeline::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 12px;
-            width: 12px;
-            border-radius: 50%;
-            background: #fff;
-            box-shadow: 0 0 4px rgba(0,0,0,0.5);
-            margin-top: -4px;
-        }
-        input[type=range].timeline::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 4px;
-            background: rgba(255,255,255,0.3);
-            border-radius: 2px;
-        }
+        input[type=range].timeline { -webkit-appearance: none; width: 100%; background: transparent; height: 10px; cursor: pointer; }
+        input[type=range].timeline::-webkit-slider-thumb { -webkit-appearance: none; height: 12px; width: 12px; border-radius: 50%; background: #fff; box-shadow: 0 0 4px rgba(0,0,0,0.5); margin-top: -4px; }
+        input[type=range].timeline::-webkit-slider-runnable-track { width: 100%; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; }
 
-        /* Video Controls Overlay */
-        .vid-controls {
-            opacity: 1; 
-            transition: opacity 0.2s;
-        }
+        .vid-controls { opacity: 1; transition: opacity 0.2s; }
         
-        /* Video Container & Zoom Logic */
-        .vid-wrapper {
-            position: absolute; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%;
-            overflow: hidden;
-            background: #000;
-        }
-        .vid-content {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            transform-origin: center center;
-            transition: transform 0.1s linear;
-            cursor: grab;
-        }
+        .vid-wrapper { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
+        .vid-content { width: 100%; height: 100%; object-fit: contain; transform-origin: center center; transition: transform 0.1s linear; cursor: grab; }
         .vid-content:active { cursor: grabbing; }
         .scale-flip { transform: scaleX(-1); }
 
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .report-panel { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
     </style>
 </head>
 <body class="h-screen w-screen flex flex-col">
 
-    <!-- 1. MAIN MENU SCREEN -->
+    <!-- MENU -->
     <div id="mainMenu" class="absolute inset-0 z-50 bg-slate-900 flex flex-col p-6 overflow-y-auto">
         <header class="mb-8 mt-4">
             <h1 class="text-3xl font-black italic tracking-tighter">HALTERO<span class="text-blue-500">AI</span></h1>
-            <p class="text-gray-400 text-sm">Elige tu herramienta de entrenamiento</p>
+            <p class="text-gray-400 text-sm">Versión Ultimate 3.8</p>
         </header>
-
         <div class="flex-grow grid gap-4 pb-8">
-            <!-- Mode 1: AI Analysis -->
             <button onclick="app.setMode('AI')" class="menu-card bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6 rounded-2xl text-left shadow-lg relative overflow-hidden group">
                 <div class="absolute right-0 top-0 p-4 opacity-20 group-hover:opacity-40 transition"><i class="fa-solid fa-robot text-6xl text-blue-500"></i></div>
-                <div class="relative z-10">
-                    <span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded uppercase">Recomendado</span>
-                    <h2 class="text-xl font-bold mt-2 text-white">Coach IA</h2>
-                    <p class="text-sm text-gray-400 mt-1">Análisis biomecánico en tiempo real. Detecta profundidad, postura y errores según el ejercicio.</p>
-                </div>
+                <div class="relative z-10"><span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded uppercase">Recomendado</span><h2 class="text-xl font-bold mt-2 text-white">Coach IA</h2><p class="text-sm text-gray-400 mt-1">Análisis biomecánico inteligente según el ejercicio.</p></div>
             </button>
-
-            <!-- Mode 2: Bar Path -->
             <button onclick="app.setMode('PATH')" class="menu-card bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6 rounded-2xl text-left shadow-lg relative overflow-hidden group">
                 <div class="absolute right-0 top-0 p-4 opacity-20 group-hover:opacity-40 transition"><i class="fa-solid fa-wave-square text-6xl text-green-500"></i></div>
-                <div class="relative z-10">
-                    <h2 class="text-xl font-bold text-white">Trayectoria</h2>
-                    <p class="text-sm text-gray-400 mt-1">Rastreo visual de la barra. Comprueba tu verticalidad y consistencia.</p>
-                </div>
+                <div class="relative z-10"><h2 class="text-xl font-bold text-white">Trayectoria</h2><p class="text-sm text-gray-400 mt-1">Rastreo visual de la barra.</p></div>
             </button>
-
-            <!-- Mode 3: Compare -->
             <button onclick="app.setMode('COMPARE')" class="menu-card bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6 rounded-2xl text-left shadow-lg relative overflow-hidden group">
                 <div class="absolute right-0 top-0 p-4 opacity-20 group-hover:opacity-40 transition"><i class="fa-solid fa-table-columns text-6xl text-purple-500"></i></div>
-                <div class="relative z-10">
-                    <h2 class="text-xl font-bold text-white">Lado a Lado</h2>
-                    <p class="text-sm text-gray-400 mt-1">Compara tus videos con profesionales. Cámara lenta y sync.</p>
-                </div>
+                <div class="relative z-10"><h2 class="text-xl font-bold text-white">Lado a Lado</h2><p class="text-sm text-gray-400 mt-1">Compara videos frame a frame.</p></div>
             </button>
         </div>
     </div>
 
-    <!-- 2. WORKSPACE HEADER (Shared) -->
+    <!-- WORKSPACE HEADER -->
     <div id="workspaceHeader" class="glass h-14 flex items-center justify-between px-4 z-40 hide">
         <button onclick="app.goHome()" class="text-gray-300 hover:text-white"><i class="fa-solid fa-arrow-left"></i> Menú</button>
         <h2 id="workspaceTitle" class="font-bold text-sm tracking-wide uppercase text-blue-400">MODO</h2>
-        
-        <!-- Expanded Exercise Selector -->
         <div id="exerciseSelectorWrapper" class="hide max-w-[50%]">
             <select id="exerciseSelect" class="bg-slate-800 text-xs rounded border border-slate-600 px-2 py-1 outline-none w-full truncate">
                 <optgroup label="SENTADILLAS">
@@ -169,30 +112,50 @@
         </div>
     </div>
 
-    <!-- 3. CAMERA WORKSPACE (Used by AI & Path) -->
+    <!-- CAMERA WORKSPACE -->
     <div id="cameraWorkspace" class="flex-grow relative hide bg-black">
         <video id="inputVideo" playsinline muted class="cam transform scale-x-[-1]"></video>
         <canvas id="outputCanvas" class="cam transform scale-x-[-1]"></canvas>
 
+        <!-- Status Overlays -->
+        <div id="bodyStatus" class="absolute top-20 left-0 w-full text-center z-20 pointer-events-none">
+            <span class="bg-red-600/80 text-white px-4 py-1 rounded-full text-xs font-bold shadow-lg animate-pulse">⚠️ NO SE DETECTA CUERPO</span>
+        </div>
+
+        <div id="liveFeedback" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none transition-opacity duration-200 opacity-0 z-20">
+            <div class="bg-black/70 backdrop-blur-md px-6 py-3 rounded-xl border border-white/20">
+                <span id="feedbackText" class="text-2xl font-black text-white italic uppercase tracking-widest">GOOD LIFT</span>
+            </div>
+        </div>
+
         <!-- Start Overlay -->
         <div id="camStartOverlay" class="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center z-30">
             <div class="text-center p-6">
-                <div class="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/30">
-                    <i class="fa-solid fa-camera text-3xl"></i>
-                </div>
+                <div class="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/30"><i class="fa-solid fa-camera text-3xl"></i></div>
                 <h3 class="text-xl font-bold mb-2">Cámara Lista</h3>
-                <p id="camInstructions" class="text-sm text-gray-400 mb-6">Coloca el móvil de perfil. Asegúrate que se vea todo el cuerpo.</p>
+                <p id="camInstructions" class="text-sm text-gray-400 mb-6">Asegúrate de que se vea todo el cuerpo de perfil.</p>
                 <div class="flex gap-2 justify-center">
                     <button onclick="app.startCamera()" class="bg-white text-slate-900 font-bold py-3 px-6 rounded-xl hover:bg-gray-100">Activar Cámara</button>
-                    <label class="bg-slate-700 text-white font-bold py-3 px-6 rounded-xl cursor-pointer hover:bg-slate-600">
-                        <i class="fa-solid fa-upload"></i>
-                        <input type="file" accept="video/*" class="hidden" onchange="app.handleFileUpload(this)">
-                    </label>
+                    <label class="bg-slate-700 text-white font-bold py-3 px-6 rounded-xl cursor-pointer hover:bg-slate-600"><i class="fa-solid fa-upload"></i><input type="file" accept="video/*" class="hidden" onchange="app.handleFileUpload(this)"></label>
                 </div>
             </div>
         </div>
 
-        <!-- AI HUD (Metrics) -->
+        <!-- AI Playback Controls (NEW for uploaded videos) -->
+        <div id="aiVideoControls" class="absolute bottom-32 left-0 w-full px-4 z-40 hide flex flex-col gap-2">
+            <div class="flex justify-between items-center bg-slate-900/80 rounded-lg p-2 backdrop-blur">
+                <button onclick="app.resetInput()" class="text-red-400 hover:text-white px-2 text-xs font-bold border border-red-900/50 rounded py-1"><i class="fa-solid fa-rotate mr-1"></i> CAMBIAR</button>
+                
+                <div class="flex items-center gap-4 flex-grow justify-center">
+                    <button onclick="app.toggleMainVideoPlay()" class="text-white text-xl"><i id="btnMainPlay" class="fa-solid fa-pause"></i></button>
+                    <input type="range" id="seekMain" class="timeline w-32" value="0" min="0" max="100" step="0.1" oninput="app.onSeekMain(this.value)">
+                </div>
+                
+                <div class="w-12"></div> <!-- Spacer -->
+            </div>
+        </div>
+
+        <!-- AI HUD -->
         <div id="hudAI" class="absolute bottom-0 left-0 w-full p-4 pb-8 bg-gradient-to-t from-black to-transparent hide">
             <div class="flex justify-center mb-4">
                 <button id="btnRecordAI" class="w-16 h-16 rounded-full border-4 border-slate-500 flex items-center justify-center transition-transform active:scale-95" onclick="app.toggleRecording()">
@@ -200,185 +163,147 @@
                 </button>
             </div>
             <div class="grid grid-cols-3 gap-2">
-                <div class="glass rounded-lg p-2 text-center">
-                    <div class="text-[10px] text-gray-400 uppercase">Rodilla</div>
-                    <div class="font-mono font-bold text-xl text-blue-400" id="valKnee">--</div>
-                </div>
-                <div class="glass rounded-lg p-2 text-center">
-                    <div class="text-[10px] text-gray-400 uppercase">Cadera</div>
-                    <div class="font-mono font-bold text-xl text-purple-400" id="valHip">--</div>
-                </div>
-                <div class="glass rounded-lg p-2 text-center border-l-2 border-green-500">
-                    <div class="text-[10px] text-gray-400 uppercase">Estado</div>
-                    <div class="font-bold text-xs uppercase mt-1" id="valPhase">Listo</div>
-                </div>
+                <div class="glass rounded-lg p-2 text-center"><div class="text-[10px] text-gray-400 uppercase">Rodilla</div><div class="font-mono font-bold text-xl text-blue-400" id="valKnee">--</div></div>
+                <div class="glass rounded-lg p-2 text-center"><div class="text-[10px] text-gray-400 uppercase">Cadera</div><div class="font-mono font-bold text-xl text-purple-400" id="valHip">--</div></div>
+                <div class="glass rounded-lg p-2 text-center border-l-2 border-green-500"><div class="text-[10px] text-gray-400 uppercase">Estado</div><div class="font-bold text-xs uppercase mt-1" id="valPhase">Listo</div></div>
             </div>
         </div>
 
         <!-- PATH HUD -->
-        <div id="hudPath" class="absolute top-4 right-4 z-20 hide">
-            <button onclick="app.clearPath()" class="glass px-3 py-2 rounded text-xs text-red-400 font-bold"><i class="fa-solid fa-eraser"></i> Borrar</button>
-        </div>
-        <div id="hudPathBottom" class="absolute bottom-0 left-0 w-full p-6 flex justify-center pb-12 bg-gradient-to-t from-black to-transparent hide">
-            <div class="text-center">
-                <p class="text-xs text-green-400 font-bold mb-2 uppercase tracking-wider animate-pulse">Rastreando Trayectoria</p>
-                <p class="text-xs text-gray-400">Realiza el levantamiento. La línea se dibujará sola.</p>
-            </div>
+        <div id="hudPath" class="absolute top-4 right-4 z-20 hide"><button onclick="app.clearPath()" class="glass px-3 py-2 rounded text-xs text-red-400 font-bold"><i class="fa-solid fa-eraser"></i> Borrar</button></div>
+        <div id="hudPathBottom" class="absolute bottom-0 left-0 w-full p-6 flex justify-center pb-12 bg-gradient-to-t from-black to-transparent hide"><div class="text-center"><p class="text-xs text-green-400 font-bold mb-2 uppercase tracking-wider animate-pulse">Rastreando Trayectoria</p></div></div>
+        
+        <!-- Video control for Path mode if uploaded -->
+        <div id="pathVideoControls" class="absolute bottom-32 left-0 w-full px-4 z-40 hide">
+             <div class="flex justify-center items-center bg-slate-900/80 rounded-lg p-2 backdrop-blur">
+                <button onclick="app.resetInput()" class="text-red-400 hover:text-white px-2 text-xs font-bold mr-4"><i class="fa-solid fa-rotate mr-1"></i> CAMBIAR</button>
+                <button onclick="app.toggleMainVideoPlay()" class="text-white text-xl"><i id="btnPathPlay" class="fa-solid fa-pause"></i></button>
+             </div>
         </div>
     </div>
 
-    <!-- 4. COMPARE WORKSPACE -->
+    <!-- COMPARE WORKSPACE -->
     <div id="compareWorkspace" class="flex-grow flex flex-col hide bg-slate-950 overflow-hidden">
-        
-        <!-- NEW GRID CONTAINER FOR FLEXIBLE LAYOUT -->
         <div id="compareGrid" class="flex-grow flex flex-col min-h-0 relative">
-            
-            <!-- Video 1 (Top/Left) -->
+            <!-- Video 1 -->
             <div id="containerTop" class="flex-1 relative border border-slate-800 vid-container transition-all duration-300 min-h-0 min-w-0">
-                <div class="vid-wrapper" id="wrapTop">
-                    <video id="vidTop" class="vid-content bg-black" playsinline loop muted></video>
-                </div>
-                
-                <div id="overlayTop" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50 cursor-pointer hover:bg-slate-900/40 transition z-10">
-                    <i class="fa-solid fa-plus text-4xl text-gray-500 mb-2"></i>
-                    <span class="text-xs font-bold text-gray-400">VIDEO 1</span>
-                    <input type="file" accept="video/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="app.loadCompareVideo('top', this)">
-                </div>
-
+                <div class="vid-wrapper" id="wrapTop"><video id="vidTop" class="vid-content bg-black" playsinline loop muted></video></div>
+                <div id="overlayTop" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50 cursor-pointer hover:bg-slate-900/40 transition z-10"><i class="fa-solid fa-plus text-4xl text-gray-500 mb-2"></i><span class="text-xs font-bold text-gray-400">VIDEO 1</span><input type="file" accept="video/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="app.loadCompareVideo('top', this)"></div>
                 <div class="absolute bottom-0 left-0 w-full p-2 bg-gradient-to-t from-slate-900/90 to-transparent vid-controls z-20 flex flex-col gap-1">
                      <input type="range" id="seekTop" class="timeline" value="0" min="0" max="100" step="0.1" oninput="app.onSeekInput('top', this.value)">
                      <div class="flex justify-between items-center px-1">
-                         <div class="flex gap-2">
-                             <button onclick="app.toggleZoom('top')" class="text-white hover:text-blue-400"><i id="iconZoomTop" class="fa-solid fa-magnifying-glass-plus text-xs"></i></button>
-                             <button onclick="app.toggleFlip('top')" class="text-white hover:text-blue-400"><i id="iconFlipTop" class="fa-solid fa-right-left text-xs"></i></button>
-                         </div>
-                         <div class="flex gap-2 items-center">
-                             <button onclick="app.seekSingle('top', -0.1)" class="text-gray-400"><i class="fa-solid fa-backward-step text-xs"></i></button>
-                             <button onclick="app.toggleSinglePlay('top')" class="text-white"><i id="btnPlayTop" class="fa-solid fa-play text-xs"></i></button>
-                             <button onclick="app.seekSingle('top', 0.1)" class="text-gray-400"><i class="fa-solid fa-forward-step text-xs"></i></button>
-                         </div>
-                         <button onclick="app.toggleMaximize('top')" class="text-blue-400 hover:text-white"><i id="iconMaxTop" class="fa-solid fa-expand text-xs"></i></button>
+                         <div class="flex gap-2"><button onclick="app.toggleZoom('top')" class="text-white"><i id="iconZoomTop" class="fa-solid fa-magnifying-glass-plus text-xs"></i></button><button onclick="app.toggleFlip('top')" class="text-white"><i id="iconFlipTop" class="fa-solid fa-right-left text-xs"></i></button></div>
+                         <div class="flex gap-2 items-center"><button onclick="app.toggleSinglePlay('top')" class="text-white"><i id="btnPlayTop" class="fa-solid fa-play text-xs"></i></button></div>
+                         <button onclick="app.toggleMaximize('top')" class="text-blue-400"><i id="iconMaxTop" class="fa-solid fa-expand text-xs"></i></button>
                      </div>
                 </div>
             </div>
-
-            <!-- Video 2 (Bottom/Right) -->
+            <!-- Video 2 -->
             <div id="containerBot" class="flex-1 relative border border-slate-800 vid-container transition-all duration-300 min-h-0 min-w-0">
-                <div class="vid-wrapper" id="wrapBot">
-                    <video id="vidBot" class="vid-content bg-black" playsinline loop muted></video>
-                </div>
-                
-                <div id="overlayBot" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50 cursor-pointer hover:bg-slate-900/40 transition z-10">
-                    <i class="fa-solid fa-plus text-4xl text-gray-500 mb-2"></i>
-                    <span class="text-xs font-bold text-gray-400">VIDEO 2</span>
-                    <input type="file" accept="video/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="app.loadCompareVideo('bot', this)">
-                </div>
-
+                <div class="vid-wrapper" id="wrapBot"><video id="vidBot" class="vid-content bg-black" playsinline loop muted></video></div>
+                <div id="overlayBot" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50 cursor-pointer hover:bg-slate-900/40 transition z-10"><i class="fa-solid fa-plus text-4xl text-gray-500 mb-2"></i><span class="text-xs font-bold text-gray-400">VIDEO 2</span><input type="file" accept="video/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="app.loadCompareVideo('bot', this)"></div>
                 <div class="absolute bottom-0 left-0 w-full p-2 bg-gradient-to-t from-slate-900/90 to-transparent vid-controls z-20 flex flex-col gap-1">
                      <input type="range" id="seekBot" class="timeline" value="0" min="0" max="100" step="0.1" oninput="app.onSeekInput('bot', this.value)">
                      <div class="flex justify-between items-center px-1">
-                         <div class="flex gap-2">
-                             <button onclick="app.toggleZoom('bot')" class="text-white hover:text-purple-400"><i id="iconZoomBot" class="fa-solid fa-magnifying-glass-plus text-xs"></i></button>
-                             <button onclick="app.toggleFlip('bot')" class="text-white hover:text-purple-400"><i id="iconFlipBot" class="fa-solid fa-right-left text-xs"></i></button>
-                         </div>
-                         <div class="flex gap-2 items-center">
-                             <button onclick="app.seekSingle('bot', -0.1)" class="text-gray-400"><i class="fa-solid fa-backward-step text-xs"></i></button>
-                             <button onclick="app.toggleSinglePlay('bot')" class="text-white"><i id="btnPlayBot" class="fa-solid fa-play text-xs"></i></button>
-                             <button onclick="app.seekSingle('bot', 0.1)" class="text-gray-400"><i class="fa-solid fa-forward-step text-xs"></i></button>
-                         </div>
-                         <button onclick="app.toggleMaximize('bot')" class="text-purple-400 hover:text-white"><i id="iconMaxBot" class="fa-solid fa-expand text-xs"></i></button>
+                         <div class="flex gap-2"><button onclick="app.toggleZoom('bot')" class="text-white"><i id="iconZoomBot" class="fa-solid fa-magnifying-glass-plus text-xs"></i></button><button onclick="app.toggleFlip('bot')" class="text-white"><i id="iconFlipBot" class="fa-solid fa-right-left text-xs"></i></button></div>
+                         <div class="flex gap-2 items-center"><button onclick="app.toggleSinglePlay('bot')" class="text-white"><i id="btnPlayBot" class="fa-solid fa-play text-xs"></i></button></div>
+                         <button onclick="app.toggleMaximize('bot')" class="text-purple-400"><i id="iconMaxBot" class="fa-solid fa-expand text-xs"></i></button>
                      </div>
                 </div>
             </div>
         </div>
-
-        <!-- Master Controls (Footer) -->
+        <!-- Master Controls -->
         <div class="h-auto py-3 glass flex flex-col gap-2 shrink-0 z-30 border-t border-slate-700">
-            <!-- Top Row: Layout & Speed -->
             <div class="flex items-center gap-2 px-4">
-                <button onclick="app.toggleLayout()" class="text-white bg-slate-700 p-2 rounded hover:bg-slate-600 transition" title="Rotar Layout">
-                    <i id="iconLayout" class="fa-solid fa-table-cells-large fa-rotate-90"></i>
-                </button>
-                <span class="text-xs text-gray-400 font-bold whitespace-nowrap">VEL</span>
+                <button onclick="app.toggleLayout()" class="text-white bg-slate-700 p-2 rounded hover:bg-slate-600 transition"><i id="iconLayout" class="fa-solid fa-table-cells-large fa-rotate-90"></i></button>
                 <input type="range" min="0.1" max="1" step="0.1" value="1" class="w-full speed-slider" oninput="app.setSpeed(this.value)">
-                <span id="speedVal" class="text-xs font-mono w-8 text-right font-bold text-blue-400">1.0x</span>
             </div>
-            
-            <!-- Bottom Row: Playback -->
             <div class="flex justify-center gap-8 items-center mt-1">
-                <button onclick="app.seekCompare(-0.1)" class="text-gray-400 hover:text-white p-2 text-xs font-bold"><i class="fa-solid fa-rotate-left"></i> -0.1s</button>
-                <button onclick="app.toggleComparePlay()" class="w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full text-white flex items-center justify-center shadow-lg hover:scale-105 transition border-2 border-white/20">
-                    <i id="btnComparePlayIcon" class="fa-solid fa-play text-xl ml-1"></i>
-                </button>
-                <button onclick="app.seekCompare(0.1)" class="text-gray-400 hover:text-white p-2 text-xs font-bold">+0.1s <i class="fa-solid fa-rotate-right"></i></button>
+                <button onclick="app.seekCompare(-0.1)" class="text-gray-400"><i class="fa-solid fa-rotate-left"></i></button>
+                <button onclick="app.toggleComparePlay()" class="w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full text-white flex items-center justify-center shadow-lg"><i id="btnComparePlayIcon" class="fa-solid fa-play text-xl ml-1"></i></button>
+                <button onclick="app.seekCompare(0.1)" class="text-gray-400"><i class="fa-solid fa-rotate-right"></i></button>
             </div>
         </div>
     </div>
 
     <!-- AI REPORT MODAL -->
-    <div id="aiModal" class="fixed inset-0 z-[60] bg-slate-900/95 hidden flex flex-col p-6 animate-fade-in">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold italic">INFORME <span class="text-blue-500">AI</span></h2>
+    <div id="aiModal" class="fixed inset-0 z-[100] bg-black/95 hidden flex flex-col">
+        <div class="flex justify-between items-center p-6 border-b border-gray-800">
+            <h2 class="text-xl font-bold italic">ANÁLISIS <span class="text-blue-500">AI</span></h2>
             <button onclick="document.getElementById('aiModal').classList.add('hidden')" class="text-gray-400"><i class="fa-solid fa-xmark text-2xl"></i></button>
         </div>
-        <div class="flex-grow overflow-y-auto">
-            <div class="bg-slate-800 p-4 rounded-xl border-l-4 border-blue-500 mb-4">
-                <h4 class="font-bold text-blue-400 text-xs mb-1">RESUMEN</h4>
-                <p id="aiFeedbackText" class="text-sm text-gray-200">Analizando...</p>
+        <div class="flex-grow overflow-y-auto p-6 report-panel">
+            <div class="flex items-center gap-4 mb-8">
+                <div class="relative w-20 h-20">
+                    <svg class="w-full h-full transform -rotate-90"><circle cx="40" cy="40" r="36" stroke="#374151" stroke-width="8" fill="transparent"/><circle id="scoreCircle" cx="40" cy="40" r="36" stroke="#3b82f6" stroke-width="8" fill="transparent" stroke-dasharray="226" stroke-dashoffset="0" stroke-linecap="round"/></svg>
+                    <div class="absolute inset-0 flex items-center justify-center"><span id="scoreText" class="text-xl font-black">10</span></div>
+                </div>
+                <div><h3 class="font-bold text-lg">Puntuación Técnica</h3><p class="text-sm text-gray-400">Biomecánica</p></div>
             </div>
-            <div id="aiFaultsList" class="space-y-2"></div>
+            <div class="space-y-4">
+                <div class="bg-gray-800 p-4 rounded-xl border-l-4 border-blue-500">
+                    <h4 class="font-bold text-blue-400 text-sm mb-1">OBSERVACIÓN PRINCIPAL</h4>
+                    <p id="aiFeedbackText" class="text-sm leading-relaxed text-gray-200">Procesando datos...</p>
+                </div>
+                <div id="aiFaultsList" class="space-y-2"></div>
+            </div>
         </div>
-        <button onclick="document.getElementById('aiModal').classList.add('hidden')" class="w-full bg-slate-700 py-4 rounded-xl font-bold mt-4">Cerrar</button>
+        <div class="p-4 border-t border-gray-800 bg-gray-900"><button onclick="document.getElementById('aiModal').classList.add('hidden')" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl">CERRAR</button></div>
     </div>
 
     <script>
         const app = {
             mode: null,
-            isCameraActive: false, isRecording: false, mediaRecorder: null, recordedChunks: [],
-            pose: null, barPath: [], frameData: [],
+            isCameraActive: false, isRecording: false,
+            pose: null, barPath: [], 
+            frameData: [], minHipHeight: 0, 
             
-            // Compare State
-            zoomLevels: { top: 1, bot: 1 },
-            flipStates: { top: 1, bot: 1 },
-            panOffsets: { top: {x:0, y:0}, bot: {x:0, y:0} },
+            zoomLevels: { top: 1, bot: 1 }, flipStates: { top: 1, bot: 1 }, panOffsets: { top: {x:0, y:0}, bot: {x:0, y:0} },
             dragState: { active: false, startX: 0, startY: 0, initialX: 0, initialY: 0, target: null },
-            layoutMode: 'col', // 'col' or 'row'
+            layoutMode: 'col',
 
-            // DOM
             video: document.getElementById('inputVideo'),
             canvas: document.getElementById('outputCanvas'),
             ctx: document.getElementById('outputCanvas').getContext('2d'),
             
             init: function() {
-                this.pose = new Pose({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`});
-                this.pose.setOptions({modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5});
-                this.pose.onResults(this.onPoseResults.bind(this));
-
-                this.setupPanEvents('wrapTop', 'top');
-                this.setupPanEvents('wrapBot', 'bot');
-                
-                document.getElementById('vidTop').ontimeupdate = () => this.updateSeekUI('top');
-                document.getElementById('vidBot').ontimeupdate = () => this.updateSeekUI('bot');
+                try {
+                    this.pose = new Pose({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`});
+                    this.pose.setOptions({modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5});
+                    this.pose.onResults(this.onPoseResults.bind(this));
+                    this.setupPanEvents('wrapTop', 'top'); this.setupPanEvents('wrapBot', 'bot');
+                    document.getElementById('vidTop').ontimeupdate = () => this.updateSeekUI('top');
+                    document.getElementById('vidBot').ontimeupdate = () => this.updateSeekUI('bot');
+                    
+                    // Main video seek updater
+                    this.video.ontimeupdate = () => {
+                        const slider = document.getElementById('seekMain');
+                        if (this.video.duration) slider.value = (this.video.currentTime / this.video.duration) * 100;
+                    };
+                } catch(e) { console.error(e); }
             },
 
             setMode: function(newMode) {
                 this.mode = newMode;
                 document.getElementById('mainMenu').classList.add('hide');
                 document.getElementById('workspaceHeader').classList.remove('hide');
-                
                 document.getElementById('cameraWorkspace').classList.add('hide');
                 document.getElementById('compareWorkspace').classList.add('hide');
                 document.getElementById('exerciseSelectorWrapper').classList.add('hide');
-                
-                const titles = { 'AI': 'Coach Biomecánico', 'PATH': 'Rastreo de Barra', 'COMPARE': 'Comparador' };
-                document.getElementById('workspaceTitle').innerText = titles[newMode];
+                document.getElementById('workspaceTitle').innerText = { 'AI': 'Coach IA', 'PATH': 'Trayectoria', 'COMPARE': 'Comparador' }[newMode];
 
                 if (newMode === 'AI' || newMode === 'PATH') {
                     document.getElementById('cameraWorkspace').classList.remove('hide');
                     document.getElementById('camStartOverlay').classList.remove('hide');
+                    document.getElementById('aiVideoControls').classList.add('hide'); 
+                    document.getElementById('pathVideoControls').classList.add('hide');
+                    
+                    // Reset video props
+                    this.video.src = "";
+                    
                     if (newMode === 'AI') {
                         document.getElementById('exerciseSelectorWrapper').classList.remove('hide');
-                        document.getElementById('camInstructions').innerText = "Coloca el móvil de lado (perfil) para que la IA mida los ángulos correctamente.";
+                        document.getElementById('camInstructions').innerText = "Coloca el móvil de perfil para medir ángulos.";
                     } else {
                         document.getElementById('camInstructions').innerText = "Graba de perfil. La línea verde seguirá tus muñecas.";
                     }
@@ -392,7 +317,14 @@
             startCamera: async function() {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: 1280, height: 720 }, audio: false });
-                    this.video.srcObject = stream; this.video.play(); this.isCameraActive = true;
+                    this.video.srcObject = stream; 
+                    this.video.play(); 
+                    this.isCameraActive = true;
+                    
+                    // Fix styling for camera
+                    this.video.classList.remove('object-contain-video');
+                    this.video.classList.add('scale-x-[-1]');
+                    
                     document.getElementById('camStartOverlay').classList.add('hide');
                     if (this.mode === 'AI') document.getElementById('hudAI').classList.remove('hide');
                     if (this.mode === 'PATH') {
@@ -400,7 +332,7 @@
                         document.getElementById('hudPathBottom').classList.remove('hide');
                     }
                     this.processFrame();
-                } catch (e) { alert("Error cámara: " + e.message); }
+                } catch (e) { alert("Error: " + e.message); }
             },
             
             handleFileUpload: function(input) {
@@ -408,15 +340,59 @@
                 if(file) {
                     const url = URL.createObjectURL(file);
                     this.video.srcObject = null; this.video.src = url;
-                    this.video.classList.remove('scale-x-[-1]'); this.canvas.classList.remove('scale-x-[-1]');
+                    
+                    // Fix styling for uploaded video
+                    this.video.classList.remove('scale-x-[-1]'); 
+                    this.canvas.classList.remove('scale-x-[-1]');
+                    this.video.classList.add('object-contain-video'); // Force contain
+                    
                     document.getElementById('camStartOverlay').classList.add('hide');
-                    if (this.mode === 'AI') document.getElementById('hudAI').classList.remove('hide');
+                    
+                    if (this.mode === 'AI') {
+                        document.getElementById('hudAI').classList.remove('hide');
+                        document.getElementById('aiVideoControls').classList.remove('hide'); // Show controls
+                    }
                     if (this.mode === 'PATH') {
                         document.getElementById('hudPath').classList.remove('hide');
                         document.getElementById('hudPathBottom').classList.remove('hide');
+                        document.getElementById('pathVideoControls').classList.remove('hide'); // Show controls
                     }
-                    this.video.play(); this.processFrame();
+                    
+                    this.video.onloadeddata = () => {
+                        this.video.loop = true; 
+                        this.video.play();
+                        this.processFrame();
+                        const phaseEl = document.getElementById('valPhase');
+                        if(phaseEl) { phaseEl.innerText = "DALE A GRABAR"; phaseEl.className = "font-bold text-xs uppercase mt-1 text-yellow-400 animate-pulse"; }
+                    };
                 }
+            },
+            
+            resetInput: function() {
+                this.video.pause();
+                this.video.src = "";
+                this.video.srcObject = null;
+                document.getElementById('camStartOverlay').classList.remove('hide');
+                document.getElementById('aiVideoControls').classList.add('hide');
+                document.getElementById('pathVideoControls').classList.add('hide');
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                document.getElementById('valPhase').innerText = "Listo";
+            },
+            
+            toggleMainVideoPlay: function() {
+                if (this.video.paused) {
+                    this.video.play();
+                    if(document.getElementById('btnMainPlay')) document.getElementById('btnMainPlay').classList.replace('fa-play', 'fa-pause');
+                    if(document.getElementById('btnPathPlay')) document.getElementById('btnPathPlay').classList.replace('fa-play', 'fa-pause');
+                } else {
+                    this.video.pause();
+                    if(document.getElementById('btnMainPlay')) document.getElementById('btnMainPlay').classList.replace('fa-pause', 'fa-play');
+                    if(document.getElementById('btnPathPlay')) document.getElementById('btnPathPlay').classList.replace('fa-pause', 'fa-play');
+                }
+            },
+            
+            onSeekMain: function(val) {
+                if (this.video.duration) this.video.currentTime = (val / 100) * this.video.duration;
             },
 
             processFrame: async function() {
@@ -427,7 +403,13 @@
             onPoseResults: function(results) {
                 this.canvas.width = this.video.videoWidth; this.canvas.height = this.video.videoHeight;
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                if (!results.poseLandmarks) return;
+                const statusEl = document.getElementById('bodyStatus');
+                if (!results.poseLandmarks) {
+                    if(statusEl) statusEl.classList.remove('hide');
+                    return;
+                }
+                if(statusEl) statusEl.classList.add('hide');
+
                 if (this.mode === 'AI') this.renderAI(results.poseLandmarks);
                 else if (this.mode === 'PATH') this.renderPath(results.poseLandmarks);
             },
@@ -444,10 +426,6 @@
                     for (let i = 1; i < this.barPath.length; i++) this.ctx.lineTo(this.barPath[i].x, this.barPath[i].y);
                     this.ctx.strokeStyle = '#22c55e'; this.ctx.lineWidth = 4; this.ctx.lineCap = 'round'; this.ctx.stroke();
                 }
-                if (this.barPath.length > 0) {
-                    const last = this.barPath[this.barPath.length - 1];
-                    this.ctx.beginPath(); this.ctx.arc(last.x, last.y, 8, 0, 2 * Math.PI); this.ctx.fillStyle = '#fff'; this.ctx.fill();
-                }
             },
             
             clearPath: function() { this.barPath = []; },
@@ -460,7 +438,16 @@
                     const hipAngle = this.calculateAngle(shoulder, hip, knee);
                     document.getElementById('valKnee').innerText = Math.round(kneeAngle) + "°";
                     document.getElementById('valHip').innerText = Math.round(hipAngle) + "°";
-                    if (this.isRecording) this.frameData.push({kneeAngle, hipAngle, hipY: hip.y});
+                    
+                    if (this.isRecording) {
+                        const elbow = lm[14]; const wrist = lm[16]; // Right arm
+                        const elbowAngle = this.calculateAngle(shoulder, elbow, wrist);
+                        const data = {kneeAngle, hipAngle, hipY: hip.y, elbowAngle};
+                        this.frameData.push(data);
+                        const el = document.getElementById('liveFeedback');
+                        if (kneeAngle < 90) { el.style.opacity = '1'; document.getElementById('feedbackText').innerText = "¡PROFUNDO!"; } 
+                        else { el.style.opacity = '0'; }
+                    }
                 }
             },
 
@@ -481,36 +468,84 @@
                 } else {
                     this.isRecording = false;
                     btn.classList.replace('rounded-sm', 'rounded-full'); btn.classList.remove('scale-50');
-                    document.getElementById('valPhase').innerText = "PROCESANDO";
+                    document.getElementById('valPhase').innerText = "ANALIZANDO";
                     document.getElementById('valPhase').className = "font-bold text-xs uppercase mt-1 text-white";
-                    this.analyzeLift();
+                    setTimeout(() => this.analyzeLift(), 200);
                 }
             },
 
             analyzeLift: function() {
-                const type = document.getElementById('exerciseSelect').value;
-                let faults = []; let msg = "";
-                const isSquatVariant = type.includes('SQUAT') || type.includes('CLEAN') || type.includes('SNATCH');
-                const isPowerVariant = type.includes('POWER');
-                const isMuscleVariant = type.includes('MUSCLE');
-                const isPush = type.includes('JERK') || type.includes('PRESS');
+                try {
+                    const type = document.getElementById('exerciseSelect').value;
+                    let faults = []; let msg = ""; let score = 10;
+                    
+                    const isSquatVariant = type.includes('SQUAT') || type.includes('CLEAN') || type.includes('SNATCH');
+                    const isPowerVariant = type.includes('POWER');
+                    const isPush = type.includes('JERK') || type.includes('PRESS');
+                    const isDeadlift = type.includes('DEADLIFT') || type.includes('PULL');
 
-                if (this.frameData.length < 20) { msg = "Video demasiado corto."; } else {
-                    const deepest = this.frameData.reduce((prev, curr) => prev.hipY > curr.hipY ? prev : curr);
-                    if (isSquatVariant && !isPowerVariant && !isMuscleVariant && !isPush) {
-                        if (deepest.kneeAngle > 100) faults.push("No rompiste el paralelo (Profundidad insuficiente).");
-                        else faults.push("¡Buena profundidad alcanzada!");
+                    if (!this.frameData || this.frameData.length === 0) {
+                        msg = "No se detectó movimiento. Asegúrate de estar en cuadro.";
+                        score = 0;
+                    } else if (this.frameData.length < 10) {
+                        msg = "Video demasiado corto para analizar.";
+                        score = 0;
+                    } else {
+                        const deepest = this.frameData.reduce((prev, curr) => prev.hipY > curr.hipY ? prev : curr);
+                        if (isSquatVariant && !isPowerVariant && !isPush) {
+                            if (deepest.kneeAngle > 105) {
+                                faults.push({icon: 'fa-arrow-down', text: 'Falta Profundidad (No rompiste paralelo)', severity: 'high'});
+                                score -= 4;
+                            } else {
+                                faults.push({icon: 'fa-check', text: 'Buena Profundidad', severity: 'good'});
+                            }
+                        }
+                        if (isPowerVariant) {
+                            if (deepest.kneeAngle < 90) {
+                                faults.push({icon: 'fa-triangle-exclamation', text: 'Bajaste mucho para ser Power', severity: 'medium'});
+                                score -= 3;
+                            } else {
+                                faults.push({icon: 'fa-bolt', text: 'Buena recepción alta (Power)', severity: 'good'});
+                            }
+                        }
+                        if (isDeadlift || type.includes('CLEAN')) {
+                            const minHipAngle = this.frameData.reduce((min, p) => p.hipAngle < min ? p.hipAngle : min, 180);
+                            if (minHipAngle < 60) {
+                                faults.push({icon: 'fa-person-falling', text: 'Torso Inclinado: Pecho colapsado', severity: 'medium'});
+                                score -= 3;
+                            } else {
+                                faults.push({icon: 'fa-check', text: 'Espalda sólida', severity: 'good'});
+                            }
+                        }
+                        if (isPush || type.includes('SNATCH') || type.includes('OH_SQUAT')) {
+                            const maxElbow = this.frameData.reduce((max, p) => p.elbowAngle > max ? p.elbowAngle : max, 0);
+                            if (maxElbow < 160) {
+                                faults.push({icon: 'fa-xmark', text: 'Falta bloqueo de codos (Press out)', severity: 'high'});
+                                score -= 3;
+                            } else {
+                                faults.push({icon: 'fa-check', text: 'Buen bloqueo de codos', severity: 'good'});
+                            }
+                        }
+                        if (score >= 9) msg = "¡Técnica Excelente!";
+                        else if (score >= 6) msg = "Buen intento, corrige los detalles.";
+                        else msg = "Atención a la técnica. Baja el peso.";
                     }
-                    if (isPowerVariant) {
-                        if (deepest.kneeAngle < 90) faults.push("Bajaste demasiado para ser Power.");
-                        else faults.push("Buena recepción alta (Power).");
+
+                    document.getElementById('aiFeedbackText').innerText = msg;
+                    document.getElementById('scoreText').innerText = Math.max(0, score);
+                    const dashOffset = 226 - (226 * (Math.max(0, score)/10));
+                    document.getElementById('scoreCircle').style.strokeDashoffset = dashOffset;
+                    document.getElementById('scoreCircle').style.stroke = score < 5 ? '#ef4444' : (score < 8 ? '#eab308' : '#3b82f6');
+                    const list = document.getElementById('aiFaultsList'); list.innerHTML = "";
+                    if(faults.length === 0 && score > 0) {
+                         list.innerHTML = `<div class="bg-green-900/30 p-3 rounded text-green-400 text-sm"><i class="fa-solid fa-star mr-2"></i>Sin errores graves detectados</div>`;
                     }
-                    msg = "Análisis completado para " + type.replace(/_/g, " ");
-                }
-                document.getElementById('aiFeedbackText').innerText = msg;
-                const list = document.getElementById('aiFaultsList'); list.innerHTML = "";
-                faults.forEach(f => { list.innerHTML += `<div class="bg-slate-700/50 p-2 rounded text-sm text-gray-300"><i class="fa-solid fa-circle-info mr-2 text-blue-400"></i>${f}</div>`; });
-                document.getElementById('aiModal').classList.remove('hidden');
+                    faults.forEach(f => { 
+                        const color = f.severity === 'high' ? 'text-red-400' : (f.severity === 'good' ? 'text-green-400' : 'text-yellow-400');
+                        list.innerHTML += `<div class="flex items-center gap-3 bg-gray-800/50 p-3 rounded-lg"><i class="fa-solid ${f.icon} ${color}"></i><span class="text-sm text-gray-300">${f.text}</span></div>`; 
+                    });
+                    document.getElementById('aiModal').classList.remove('hidden');
+                } catch(e) { alert("Error en análisis: " + e.message); }
             },
 
             loadCompareVideo: function(side, input) {
@@ -594,12 +629,8 @@
                 const icon = document.getElementById('btnComparePlayIcon');
                 if (v1.paused) {
                     v1.play(); v2.play(); icon.classList.replace('fa-play', 'fa-pause');
-                    document.getElementById('btnPlayTop').classList.replace('fa-play', 'fa-pause');
-                    document.getElementById('btnPlayBot').classList.replace('fa-play', 'fa-pause');
                 } else {
                     v1.pause(); v2.pause(); icon.classList.replace('fa-pause', 'fa-play');
-                    document.getElementById('btnPlayTop').classList.replace('fa-pause', 'fa-play');
-                    document.getElementById('btnPlayBot').classList.replace('fa-pause', 'fa-play');
                 }
             },
             
@@ -636,19 +667,18 @@
                     this.layoutMode = 'row';
                     grid.classList.remove('flex-col');
                     grid.classList.add('flex-row');
-                    icon.classList.remove('fa-rotate-90'); // Show vertical bars icon
+                    icon.classList.remove('fa-rotate-90'); 
                 } else {
                     this.layoutMode = 'col';
                     grid.classList.remove('flex-row');
                     grid.classList.add('flex-col');
-                    icon.classList.add('fa-rotate-90'); // Show horizontal stack icon
+                    icon.classList.add('fa-rotate-90');
                 }
             },
 
             setSpeed: function(val) {
                 document.getElementById('vidTop').playbackRate = val;
                 document.getElementById('vidBot').playbackRate = val;
-                document.getElementById('speedVal').innerText = val + "x";
             },
 
             seekCompare: function(seconds) {
