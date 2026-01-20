@@ -67,6 +67,8 @@
         #hudAI { padding-bottom: calc(2rem + var(--safe-bottom)); padding-left: calc(1rem + var(--safe-left)); padding-right: calc(1rem + var(--safe-right)); }
         #hudPathBottom { padding-bottom: calc(3rem + var(--safe-bottom)); padding-left: calc(1.5rem + var(--safe-left)); padding-right: calc(1.5rem + var(--safe-right)); }
         #aiVideoControls, #pathVideoControls { padding-left: calc(1rem + var(--safe-left)); padding-right: calc(1rem + var(--safe-right)); }
+        #aiVideoControls { bottom: calc(14rem + var(--safe-bottom)); z-index: 60; }
+        #pathVideoControls { bottom: calc(10rem + var(--safe-bottom)); z-index: 50; }
         #aiModal { padding-top: var(--safe-top); padding-bottom: var(--safe-bottom); }
 
         /* Mobile optimizations */
@@ -201,7 +203,6 @@
                 <button ontouchstart="" onclick="app.resetInput()" class="text-red-400 hover:text-white active:text-red-300 px-2 text-xs font-bold border border-red-900/50 rounded py-1 flex-shrink-0"><i class="fa-solid fa-rotate mr-1"></i> CAMBIAR</button>
                 
                 <div class="flex items-center gap-2 flex-grow justify-center min-w-0 sm:gap-4">
-                    <button ontouchstart="" onclick="app.toggleMainFit()" class="text-white text-lg flex-shrink-0" title="Ajuste de video"><i id="iconMainFit" class="fa-solid fa-expand"></i></button>
                     <button ontouchstart="" onclick="app.toggleMainVideoPlay()" class="text-white text-xl flex-shrink-0"><i id="btnMainPlay" class="fa-solid fa-pause"></i></button>
                     <input type="range" id="seekMain" class="timeline flex-grow" value="0" min="0" max="100" step="0.1" oninput="app.onSeekMain(this.value)">
                 </div>
@@ -211,7 +212,7 @@
         </div>
 
         <!-- AI HUD -->
-        <div id="hudAI" class="absolute bottom-0 left-0 w-full p-4 pb-8 bg-gradient-to-t from-black to-transparent hide z-50">
+        <div id="hudAI" class="absolute bottom-0 left-0 w-full p-4 pb-8 bg-gradient-to-t from-black to-transparent hide z-40">
             <div class="flex justify-center mb-4">
                 <button ontouchstart="" id="btnRecordAI" class="w-16 h-16 rounded-full border-4 border-slate-500 flex items-center justify-center transition-transform active:scale-95" onclick="app.toggleRecording()">
                     <div id="recInnerAI" class="w-12 h-12 bg-red-500 rounded-full"></div>
@@ -232,7 +233,6 @@
         <div id="pathVideoControls" class="absolute bottom-32 left-0 w-full px-4 z-40 hide">
              <div class="flex justify-center items-center bg-slate-900/80 rounded-lg p-3 backdrop-blur gap-3">
                 <button ontouchstart="" onclick="app.resetInput()" class="text-red-400 hover:text-white active:text-red-300 px-2 text-xs font-bold mr-4"><i class="fa-solid fa-rotate mr-1"></i> CAMBIAR</button>
-                <button ontouchstart="" onclick="app.toggleMainFit()" class="text-white text-lg" title="Ajuste de video"><i id="iconPathFit" class="fa-solid fa-expand"></i></button>
                 <button ontouchstart="" onclick="app.toggleMainVideoPlay()" class="text-white text-xl"><i id="btnPathPlay" class="fa-solid fa-pause"></i></button>
              </div>
         </div>
@@ -354,7 +354,6 @@
             currentObjectUrl: null,
             compareObjectUrls: { top: null, bot: null },
             stream: null,
-            mainFitMode: 'cover',
             pose: null, barPath: [], 
             frameData: [], minHipHeight: 0, 
             
@@ -443,8 +442,6 @@
                     this.video.classList.remove('object-contain-video');
                     this.video.classList.add('scale-x-[-1]');
                     this.canvas.classList.add('scale-x-[-1]');
-                    this.mainFitMode = 'cover';
-                    this.applyMainFitMode();
                     this.setMainPlayIcons(false);
                     
                     if (newMode === 'AI') {
@@ -480,22 +477,6 @@
                 const path = document.getElementById('btnPathPlay');
                 if (main) main.className = `fa-solid ${isPlaying ? 'fa-pause' : 'fa-play'}`;
                 if (path) path.className = `fa-solid ${isPlaying ? 'fa-pause' : 'fa-play'}`;
-            },
-
-            applyMainFitMode: function() {
-                const useContain = this.mainFitMode === 'contain';
-                this.video.classList.toggle('object-contain-video', useContain);
-                this.canvas.classList.toggle('object-contain-video', useContain);
-                const iconMain = document.getElementById('iconMainFit');
-                const iconPath = document.getElementById('iconPathFit');
-                const iconClass = useContain ? 'fa-expand' : 'fa-compress';
-                if (iconMain) iconMain.className = `fa-solid ${iconClass}`;
-                if (iconPath) iconPath.className = `fa-solid ${iconClass}`;
-            },
-
-            toggleMainFit: function() {
-                this.mainFitMode = this.mainFitMode === 'cover' ? 'contain' : 'cover';
-                this.applyMainFitMode();
             },
 
             getCameraConstraints: function(useLow) {
@@ -604,8 +585,6 @@
                     this.video.classList.remove('object-contain-video');
                     this.video.classList.add('scale-x-[-1]');
                     this.canvas.classList.add('scale-x-[-1]');
-                    this.mainFitMode = 'cover';
-                    this.applyMainFitMode();
                     
                     document.getElementById('camStartOverlay').classList.add('hide');
                     if (this.mode === 'AI') document.getElementById('hudAI').classList.remove('hide');
@@ -629,8 +608,8 @@
                     // Fix styling for uploaded video
                     this.video.classList.remove('scale-x-[-1]'); 
                     this.canvas.classList.remove('scale-x-[-1]');
-                    this.mainFitMode = 'cover';
-                    this.applyMainFitMode();
+                    this.video.classList.remove('object-contain-video');
+                    this.canvas.classList.remove('object-contain-video');
                     
                     document.getElementById('camStartOverlay').classList.add('hide');
                     
@@ -667,8 +646,6 @@
                 this.video.classList.remove('object-contain-video');
                 this.video.classList.add('scale-x-[-1]');
                 this.canvas.classList.add('scale-x-[-1]');
-                this.mainFitMode = 'cover';
-                this.applyMainFitMode();
                 this.setMainPlayIcons(false);
                 document.getElementById('camStartOverlay').classList.remove('hide');
                 document.getElementById('aiVideoControls').classList.add('hide');
