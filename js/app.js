@@ -103,6 +103,7 @@ const app = {
         const success = await VideoHandler.startCamera(this.video);
         if (success) {
             this.setPerformanceMode(true);
+            this.canvas.classList.add('scale-x-[-1]');
             UIManager.hideElements('camStartOverlay', 'aiVideoControls', 'pathVideoControls');
             if (this.mode === 'AI') UIManager.showElements('hudAI');
             if (this.mode === 'PATH') UIManager.showElements('hudPath', 'hudPathBottom');
@@ -115,6 +116,7 @@ const app = {
         if (!file) return;
 
         VideoHandler.handleFileUpload(this.video, file);
+        this.canvas.classList.remove('scale-x-[-1]');
         UIManager.hideElements('camStartOverlay');
         this.setPerformanceMode(true);
 
@@ -177,8 +179,7 @@ const app = {
     onPoseResults(results) {
         const videoWidth = this.video.videoWidth;
         const videoHeight = this.video.videoHeight;
-        if (!videoWidth || !videoHeight) return;
-        if (videoWidth !== this.lastVideoWidth || videoHeight !== this.lastVideoHeight) {
+        if (videoWidth && videoHeight && (videoWidth !== this.lastVideoWidth || videoHeight !== this.lastVideoHeight)) {
             this.canvas.width = videoWidth;
             this.canvas.height = videoHeight;
             this.lastVideoWidth = videoWidth;
