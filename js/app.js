@@ -5,6 +5,9 @@ const app = {
     video: null,
     canvas: null,
     ctx: null,
+    lastVideoWidth: 0,
+    lastVideoHeight: 0,
+    wasPlayingBeforeHide: false,
 
     async init() {
         try {
@@ -19,6 +22,7 @@ const app = {
 
             // Configurar eventos de video
             this.setupVideoEvents();
+            this.setupVisibilityHandling();
 
             // Configurar eventos de pan en videos de comparación
             CompareModeHandler.setupPanEvents('wrapTop', 'top');
@@ -49,6 +53,32 @@ const app = {
         };
     },
 
+    setPerformanceMode(enabled) {
+        document.body.classList.toggle('perf-mode', enabled);
+    },
+
+    setupVisibilityHandling() {
+        document.addEventListener('visibilitychange', () => {
+            if (!this.video) return;
+            const hasSource = this.video.srcObject || this.video.src;
+            if (!hasSource) return;
+
+            if (document.hidden) {
+                this.wasPlayingBeforeHide = !this.video.paused;
+                if (this.wasPlayingBeforeHide) {
+                    this.video.pause();
+                    UIManager.replaceClass('btnMainPlay', 'fa-pause', 'fa-play');
+                    UIManager.replaceClass('btnPathPlay', 'fa-pause', 'fa-play');
+                }
+            } else if (this.wasPlayingBeforeHide) {
+                this.video.play().catch(() => {});
+                UIManager.replaceClass('btnMainPlay', 'fa-play', 'fa-pause');
+                UIManager.replaceClass('btnPathPlay', 'fa-play', 'fa-pause');
+                this.wasPlayingBeforeHide = false;
+            }
+        });
+    },
+
     setMode(newMode) {
         this.mode = newMode;
         UIManager.hideElements('mainMenu', 'exerciseSelectorWrapper');
@@ -72,6 +102,7 @@ const app = {
     async startCamera() {
         const success = await VideoHandler.startCamera(this.video);
         if (success) {
+            this.setPerformanceMode(true);
             UIManager.hideElements('camStartOverlay', 'aiVideoControls', 'pathVideoControls');
             if (this.mode === 'AI') UIManager.showElements('hudAI');
             if (this.mode === 'PATH') UIManager.showElements('hudPath', 'hudPathBottom');
@@ -85,6 +116,7 @@ const app = {
 
         VideoHandler.handleFileUpload(this.video, file);
         UIManager.hideElements('camStartOverlay');
+        this.setPerformanceMode(true);
 
         if (this.mode === 'AI') {
             UIManager.showElements('hudAI', 'aiVideoControls');
@@ -107,6 +139,8 @@ const app = {
 
     resetInput() {
         VideoHandler.resetVideo(this.video, this.canvas);
+        this.setPerformanceMode(false);
+        this.wasPlayingBeforeHide = false;
         UIManager.showElements('camStartOverlay');
         UIManager.hideElements('aiVideoControls', 'pathVideoControls');
         UIManager.setText('valPhase', 'Listo');
@@ -141,8 +175,15 @@ const app = {
     },
 
     onPoseResults(results) {
-        this.canvas.width = this.video.videoWidth;
-        this.canvas.height = this.video.videoHeight;
+        const videoWidth = this.video.videoWidth;
+        const videoHeight = this.video.videoHeight;
+        if (!videoWidth || !videoHeight) return;
+        if (videoWidth !== this.lastVideoWidth || videoHeight !== this.lastVideoHeight) {
+            this.canvas.width = videoWidth;
+            this.canvas.height = videoHeight;
+            this.lastVideoWidth = videoWidth;
+            this.lastVideoHeight = videoHeight;
+        }
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         const statusEl = document.getElementById('bodyStatus');

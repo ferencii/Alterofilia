@@ -8,8 +8,12 @@ const MediaPipeHandler = {
             this.pose = new Pose({
                 locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
             });
+            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            const isLowPower = (navigator.deviceMemory && navigator.deviceMemory <= 4)
+                || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
+            const modelComplexity = (isMobile || isLowPower) ? 0 : 1;
             this.pose.setOptions({
-                modelComplexity: 1,
+                modelComplexity,
                 smoothLandmarks: true,
                 minDetectionConfidence: 0.5,
                 minTrackingConfidence: 0.5
