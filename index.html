@@ -2,9 +2,18 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="color-scheme" content="dark">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
     <title>Haltero AI Ultimate</title>
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700;900&display=swap" rel="stylesheet">
@@ -15,13 +24,16 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
 
     <style>
-        body { background-color: #0f172a; color: #f3f4f6; font-family: 'Roboto', sans-serif; overflow: hidden; }
+        :root { --safe-top: env(safe-area-inset-top); --safe-right: env(safe-area-inset-right); --safe-bottom: env(safe-area-inset-bottom); --safe-left: env(safe-area-inset-left); }
+        html, body { height: 100%; }
+        body { background-color: #0f172a; color: #f3f4f6; font-family: 'Roboto', sans-serif; overflow: hidden; min-height: 100dvh; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+        body.h-screen { height: 100dvh; }
         .hide { display: none !important; }
         .show { display: flex !important; }
         .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border-top: 1px solid rgba(255,255,255,0.1); }
         
         .viewport-container { position: relative; width: 100%; height: 100%; overflow: hidden; background: #000; }
-        video.cam, canvas.cam { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        video.cam, canvas.cam { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; will-change: transform; }
         
         /* Utility class for uploaded videos to fit properly */
         .object-contain-video { object-fit: contain !important; }
@@ -47,6 +59,36 @@
 
         @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .report-panel { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+
+        #mainMenu { padding-top: calc(1.5rem + var(--safe-top)); padding-bottom: calc(1.5rem + var(--safe-bottom)); padding-left: calc(1.5rem + var(--safe-left)); padding-right: calc(1.5rem + var(--safe-right)); }
+        #workspaceHeader { height: calc(56px + var(--safe-top)); padding-top: var(--safe-top); padding-left: calc(1rem + var(--safe-left)); padding-right: calc(1rem + var(--safe-right)); }
+        #hudAI { padding-bottom: calc(2rem + var(--safe-bottom)); padding-left: calc(1rem + var(--safe-left)); padding-right: calc(1rem + var(--safe-right)); }
+        #hudPathBottom { padding-bottom: calc(3rem + var(--safe-bottom)); padding-left: calc(1.5rem + var(--safe-left)); padding-right: calc(1.5rem + var(--safe-right)); }
+        #aiVideoControls, #pathVideoControls { padding-left: calc(1rem + var(--safe-left)); padding-right: calc(1rem + var(--safe-right)); }
+        #aiModal { padding-top: var(--safe-top); padding-bottom: var(--safe-bottom); }
+
+        @media (max-width: 768px) {
+            body { font-size: 14px; }
+            .glass { backdrop-filter: none; background: rgba(15, 23, 42, 0.95); }
+            #mainMenu { padding: calc(1rem + var(--safe-top)) calc(1rem + var(--safe-right)) calc(1rem + var(--safe-bottom)) calc(1rem + var(--safe-left)); }
+            .menu-card { padding: 1rem; border-radius: 1rem; }
+            .menu-card i { font-size: 3rem; }
+            #hudAI { padding: 1rem; padding-bottom: calc(1.5rem + var(--safe-bottom)); }
+        }
+
+        @media (max-width: 480px) {
+            #workspaceHeader { height: calc(52px + var(--safe-top)); }
+            #workspaceTitle { font-size: 0.75rem; }
+            #exerciseSelect { font-size: 12px; padding: 0.5rem; }
+        }
+
+        @media (max-width: 1024px) {
+            input, select, button, textarea { font-size: 16px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+        }
     </style>
 </head>
 <body class="h-screen w-screen flex flex-col">
@@ -55,7 +97,7 @@
     <div id="mainMenu" class="absolute inset-0 z-50 bg-slate-900 flex flex-col p-6 overflow-y-auto">
         <header class="mb-8 mt-4">
             <h1 class="text-3xl font-black italic tracking-tighter">HALTERO<span class="text-blue-500">AI</span></h1>
-            <p class="text-gray-400 text-sm">Versión Ultimate 4.0</p>
+            <p class="text-gray-400 text-sm">Versión Ultimate 4.1</p>
         </header>
         <div class="flex-grow grid gap-4 pb-8">
             <button onclick="app.setMode('AI')" class="menu-card bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6 rounded-2xl text-left shadow-lg relative overflow-hidden group">
@@ -254,7 +296,16 @@
     <script>
         const app = {
             mode: null,
+            version: "4.1",
             isCameraActive: false, isRecording: false,
+            isProcessing: false,
+            isProcessingFrame: false,
+            isAppVisible: true,
+            targetFps: 30,
+            lastFrameTime: 0,
+            currentObjectUrl: null,
+            compareObjectUrls: { top: null, bot: null },
+            stream: null,
             pose: null, barPath: [], 
             frameData: [], minHipHeight: 0, 
             
@@ -264,32 +315,54 @@
 
             video: document.getElementById('inputVideo'),
             canvas: document.getElementById('outputCanvas'),
-            ctx: document.getElementById('outputCanvas').getContext('2d'),
+            ctx: document.getElementById('outputCanvas').getContext('2d', { alpha: true, desynchronized: true }),
             
             init: function() {
                 try {
+                    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                    const lowPower = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || (navigator.deviceMemory && navigator.deviceMemory <= 4);
                     this.pose = new Pose({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`});
-                    this.pose.setOptions({modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5});
+                    this.pose.setOptions({modelComplexity: (isMobile || lowPower) ? 0 : 1, smoothLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5});
                     this.pose.onResults(this.onPoseResults.bind(this));
                     this.setupPanEvents('wrapTop', 'top'); this.setupPanEvents('wrapBot', 'bot');
                     document.getElementById('vidTop').ontimeupdate = () => this.updateSeekUI('top');
                     document.getElementById('vidBot').ontimeupdate = () => this.updateSeekUI('bot');
+
+                    if (isMobile || lowPower) this.targetFps = 24;
+                    this.video.onplay = () => this.startProcessing();
+                    this.video.onpause = () => this.stopProcessing();
+                    this.video.onended = () => this.stopProcessing();
                     
                     // Main video seek updater
                     this.video.ontimeupdate = () => {
                         const slider = document.getElementById('seekMain');
                         if (this.video.duration) slider.value = (this.video.currentTime / this.video.duration) * 100;
                     };
+
+                    document.addEventListener('visibilitychange', () => this.handleVisibilityChange());
+                    window.addEventListener('pagehide', () => this.cleanupMedia());
+                    window.addEventListener('beforeunload', () => this.cleanupMedia());
                 } catch(e) { console.error(e); }
             },
 
             setMode: function(newMode) {
                 this.mode = newMode;
+                this.stopProcessing();
+                this.stopCamera();
+                this.revokeMainObjectUrl();
+                this.pauseCompareVideos();
+                this.barPath = [];
+                this.frameData = [];
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
                 document.getElementById('mainMenu').classList.add('hide');
                 document.getElementById('workspaceHeader').classList.remove('hide');
                 document.getElementById('cameraWorkspace').classList.add('hide');
                 document.getElementById('compareWorkspace').classList.add('hide');
                 document.getElementById('exerciseSelectorWrapper').classList.add('hide');
+                document.getElementById('hudAI').classList.add('hide');
+                document.getElementById('hudPath').classList.add('hide');
+                document.getElementById('hudPathBottom').classList.add('hide');
+                document.getElementById('bodyStatus').classList.add('hide');
                 document.getElementById('workspaceTitle').innerText = { 'AI': 'Coach IA', 'PATH': 'Trayectoria', 'COMPARE': 'Comparador' }[newMode];
 
                 if (newMode === 'AI' || newMode === 'PATH') {
@@ -300,6 +373,10 @@
                     
                     // Reset video props
                     this.video.src = "";
+                    this.video.load();
+                    this.video.classList.remove('object-contain-video');
+                    this.video.classList.add('scale-x-[-1]');
+                    this.canvas.classList.add('scale-x-[-1]');
                     
                     if (newMode === 'AI') {
                         document.getElementById('exerciseSelectorWrapper').classList.remove('hide');
@@ -312,11 +389,107 @@
                 }
             },
 
-            goHome: function() { location.reload(); },
+            goHome: function() { this.cleanupMedia(); location.reload(); },
+
+            getCameraConstraints: function(useLow) {
+                const width = useLow ? 640 : 1280;
+                const height = useLow ? 480 : 720;
+                return {
+                    video: {
+                        facingMode: { ideal: 'environment' },
+                        width: { ideal: width },
+                        height: { ideal: height },
+                        frameRate: { ideal: this.targetFps, max: this.targetFps }
+                    },
+                    audio: false
+                };
+            },
+
+            startProcessing: function() {
+                if (this.isProcessing || !this.pose) return;
+                this.isProcessing = true;
+                requestAnimationFrame(this.processFrame.bind(this));
+            },
+
+            stopProcessing: function() {
+                this.isProcessing = false;
+                this.isProcessingFrame = false;
+            },
+
+            stopCamera: function() {
+                if (this.stream) {
+                    this.stream.getTracks().forEach((track) => track.stop());
+                    this.stream = null;
+                }
+                if (this.video && this.video.srcObject) {
+                    this.video.srcObject = null;
+                }
+                this.isCameraActive = false;
+            },
+
+            revokeMainObjectUrl: function() {
+                if (this.currentObjectUrl) {
+                    URL.revokeObjectURL(this.currentObjectUrl);
+                    this.currentObjectUrl = null;
+                }
+            },
+
+            revokeCompareObjectUrl: function(side) {
+                if (this.compareObjectUrls[side]) {
+                    URL.revokeObjectURL(this.compareObjectUrls[side]);
+                    this.compareObjectUrls[side] = null;
+                }
+            },
+
+            pauseCompareVideos: function() {
+                const v1 = document.getElementById('vidTop');
+                const v2 = document.getElementById('vidBot');
+                if (v1) v1.pause();
+                if (v2) v2.pause();
+                const compareIcon = document.getElementById('btnComparePlayIcon');
+                if (compareIcon) compareIcon.classList.replace('fa-pause', 'fa-play');
+                const topIcon = document.getElementById('btnPlayTop');
+                if (topIcon) topIcon.classList.replace('fa-pause', 'fa-play');
+                const botIcon = document.getElementById('btnPlayBot');
+                if (botIcon) botIcon.classList.replace('fa-pause', 'fa-play');
+            },
+
+            cleanupMedia: function() {
+                this.stopProcessing();
+                this.stopCamera();
+                this.revokeMainObjectUrl();
+                this.revokeCompareObjectUrl('top');
+                this.revokeCompareObjectUrl('bot');
+                if (this.video) {
+                    this.video.pause();
+                    this.video.src = "";
+                    this.video.load();
+                }
+            },
+
+            handleVisibilityChange: function() {
+                this.isAppVisible = !document.hidden;
+                if (!this.isAppVisible) {
+                    if (this.video && !this.video.srcObject) this.video.pause();
+                    this.stopProcessing();
+                    this.pauseCompareVideos();
+                    return;
+                }
+                if (this.mode === 'AI' || this.mode === 'PATH') {
+                    if (this.video && this.video.srcObject) {
+                        this.video.play();
+                        this.startProcessing();
+                    }
+                }
+            },
 
             startCamera: async function() {
                 try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: 1280, height: 720 }, audio: false });
+                    this.stopCamera();
+                    this.revokeMainObjectUrl();
+                    const stream = await navigator.mediaDevices.getUserMedia(this.getCameraConstraints(false))
+                        .catch(() => navigator.mediaDevices.getUserMedia(this.getCameraConstraints(true)));
+                    this.stream = stream;
                     this.video.srcObject = stream; 
                     this.video.play(); 
                     this.isCameraActive = true;
@@ -324,6 +497,7 @@
                     // Fix styling for camera
                     this.video.classList.remove('object-contain-video');
                     this.video.classList.add('scale-x-[-1]');
+                    this.canvas.classList.add('scale-x-[-1]');
                     
                     document.getElementById('camStartOverlay').classList.add('hide');
                     if (this.mode === 'AI') document.getElementById('hudAI').classList.remove('hide');
@@ -331,14 +505,17 @@
                         document.getElementById('hudPath').classList.remove('hide');
                         document.getElementById('hudPathBottom').classList.remove('hide');
                     }
-                    this.processFrame();
+                    this.startProcessing();
                 } catch (e) { alert("Error: " + e.message); }
             },
             
             handleFileUpload: function(input) {
                 const file = input.files[0];
                 if(file) {
+                    this.stopCamera();
+                    this.revokeMainObjectUrl();
                     const url = URL.createObjectURL(file);
+                    this.currentObjectUrl = url;
                     this.video.srcObject = null; this.video.src = url;
                     
                     // Fix styling for uploaded video
@@ -361,31 +538,43 @@
                     this.video.onloadeddata = () => {
                         this.video.loop = true; 
                         this.video.play();
-                        this.processFrame();
+                        this.startProcessing();
                         const phaseEl = document.getElementById('valPhase');
                         if(phaseEl) { phaseEl.innerText = "DALE A GRABAR"; phaseEl.className = "font-bold text-xs uppercase mt-1 text-yellow-400 animate-pulse"; }
                     };
+                    input.value = "";
                 }
             },
             
             resetInput: function() {
+                this.stopProcessing();
+                this.stopCamera();
+                this.revokeMainObjectUrl();
                 this.video.pause();
                 this.video.src = "";
                 this.video.srcObject = null;
+                this.video.load();
+                this.video.classList.remove('object-contain-video');
+                this.video.classList.add('scale-x-[-1]');
+                this.canvas.classList.add('scale-x-[-1]');
                 document.getElementById('camStartOverlay').classList.remove('hide');
                 document.getElementById('aiVideoControls').classList.add('hide');
                 document.getElementById('pathVideoControls').classList.add('hide');
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.barPath = [];
+                this.frameData = [];
                 document.getElementById('valPhase').innerText = "Listo";
             },
             
             toggleMainVideoPlay: function() {
                 if (this.video.paused) {
                     this.video.play();
+                    this.startProcessing();
                     if(document.getElementById('btnMainPlay')) document.getElementById('btnMainPlay').classList.replace('fa-play', 'fa-pause');
                     if(document.getElementById('btnPathPlay')) document.getElementById('btnPathPlay').classList.replace('fa-play', 'fa-pause');
                 } else {
                     this.video.pause();
+                    this.stopProcessing();
                     if(document.getElementById('btnMainPlay')) document.getElementById('btnMainPlay').classList.replace('fa-pause', 'fa-play');
                     if(document.getElementById('btnPathPlay')) document.getElementById('btnPathPlay').classList.replace('fa-pause', 'fa-play');
                 }
@@ -395,12 +584,25 @@
                 if (this.video.duration) this.video.currentTime = (val / 100) * this.video.duration;
             },
 
-            processFrame: async function() {
-                if (this.video.paused || this.video.ended) { requestAnimationFrame(this.processFrame.bind(this)); return; }
-                await this.pose.send({image: this.video}); requestAnimationFrame(this.processFrame.bind(this));
+            processFrame: async function(timestamp) {
+                if (!this.isProcessing || !this.pose) return;
+                if (this.video.paused || this.video.ended || !this.isAppVisible) { this.stopProcessing(); return; }
+                if (this.isProcessingFrame) { requestAnimationFrame(this.processFrame.bind(this)); return; }
+                if (timestamp && (timestamp - this.lastFrameTime) < (1000 / this.targetFps)) { requestAnimationFrame(this.processFrame.bind(this)); return; }
+                this.isProcessingFrame = true;
+                this.lastFrameTime = timestamp || performance.now();
+                try {
+                    await this.pose.send({image: this.video});
+                } catch (e) {
+                    console.error(e);
+                }
+                this.isProcessingFrame = false;
+                if (this.isProcessing) requestAnimationFrame(this.processFrame.bind(this));
             },
 
             onPoseResults: function(results) {
+                if (this.mode !== 'AI' && this.mode !== 'PATH') return;
+                if (!this.video.videoWidth || !this.video.videoHeight) return;
                 this.canvas.width = this.video.videoWidth; this.canvas.height = this.video.videoHeight;
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
                 const statusEl = document.getElementById('bodyStatus');
@@ -553,8 +755,12 @@
                 if (!file) return;
                 const vid = side === 'top' ? document.getElementById('vidTop') : document.getElementById('vidBot');
                 const overlay = side === 'top' ? document.getElementById('overlayTop') : document.getElementById('overlayBot');
-                vid.src = URL.createObjectURL(file);
+                this.revokeCompareObjectUrl(side);
+                const url = URL.createObjectURL(file);
+                this.compareObjectUrls[side] = url;
+                vid.src = url;
                 overlay.classList.add('hide');
+                input.value = "";
             },
 
             updateSeekUI: function(id) {
