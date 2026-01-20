@@ -105,12 +105,12 @@
     <div id="mainMenu" class="absolute inset-0 z-50 bg-slate-900 flex flex-col p-6 overflow-y-auto">
         <header class="mb-8 mt-4">
             <h1 class="text-3xl font-black italic tracking-tighter">HALTERO<span class="text-blue-500">AI</span></h1>
-            <p class="text-gray-400 text-sm">Versión Ultimate 5.1</p>
+            <p class="text-gray-400 text-sm">Versión Ultimate 5.2</p>
         </header>
         <div class="flex-grow grid gap-4 pb-8">
             <button ontouchstart="" onclick="app.setMode('AI')" class="menu-card bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6 rounded-2xl text-left shadow-lg relative overflow-hidden group">
                 <div class="absolute right-0 top-0 p-4 opacity-20 group-active:opacity-40 transition"><i class="fa-solid fa-robot text-6xl text-blue-500"></i></div>
-                <div class="relative z-10"><span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded uppercase">Recomendado</span><h2 class="text-xl font-bold mt-2 text-white">Coach IA</h2><p class="text-sm text-gray-400 mt-1">Análisis biomecánico inteligente según el ejercicio.</p></div>
+                <div class="relative z-10"><h2 class="text-xl font-bold mt-2 text-white">Coach IA</h2><p class="text-sm text-gray-400 mt-1">Análisis biomecánico inteligente según el ejercicio.</p></div>
             </button>
             <button ontouchstart="" onclick="app.setMode('PATH')" class="menu-card bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6 rounded-2xl text-left shadow-lg relative overflow-hidden group">
                 <div class="absolute right-0 top-0 p-4 opacity-20 group-active:opacity-40 transition"><i class="fa-solid fa-wave-square text-6xl text-green-500"></i></div>
@@ -366,14 +366,25 @@
                     if (isMobile) this.targetFps = 24;
                     
                     this.pose = new Pose({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`});
-                    this.pose.setOptions({modelComplexity: isMobile ? 0 : 1, smoothLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5});
+                    this.configurePose('AI');
                     this.pose.onResults(this.onPoseResults.bind(this));
                     this.setupPanEvents('wrapTop', 'top'); this.setupPanEvents('wrapBot', 'bot');
                     document.getElementById('vidTop').ontimeupdate = () => this.updateSeekUI('top');
                     document.getElementById('vidBot').ontimeupdate = () => this.updateSeekUI('bot');
                     this.video.onplay = () => this.startProcessing();
                     this.video.onpause = () => this.stopProcessing();
-                    this.video.onended = () => this.stopProcessing();
+                    this.video.onended = () => {
+                        this.stopProcessing();
+                        this.setMainPlayIcons(false);
+                        if (this.isRecording) {
+                            this.isRecording = false;
+                            const btn = document.getElementById('recInnerAI');
+                            if (btn) { btn.classList.replace('rounded-sm', 'rounded-full'); btn.classList.remove('scale-50'); }
+                            document.getElementById('valPhase').innerText = "ANALIZANDO";
+                            document.getElementById('valPhase').className = "font-bold text-xs uppercase mt-1 text-white";
+                            setTimeout(() => this.analyzeLift(), 200);
+                        }
+                    };
                     
                     // Main video seek updater
                     this.video.ontimeupdate = () => {
@@ -394,6 +405,7 @@
 
             setMode: function(newMode) {
                 this.mode = newMode;
+                if (this.pose) this.configurePose(newMode);
                 this.stopProcessing();
                 this.stopCamera();
                 this.revokeMainObjectUrl();
@@ -424,6 +436,7 @@
                     this.video.classList.remove('object-contain-video');
                     this.video.classList.add('scale-x-[-1]');
                     this.canvas.classList.add('scale-x-[-1]');
+                    this.setMainPlayIcons(false);
                     
                     if (newMode === 'AI') {
                         document.getElementById('exerciseSelectorWrapper').classList.remove('hide');
@@ -437,6 +450,26 @@
             },
 
             goHome: function() { this.cleanupMedia(); location.reload(); },
+
+            configurePose: function(mode) {
+                const highPrecision = mode === 'AI' || mode === 'PATH';
+                const complexity = isMobile ? (highPrecision ? 1 : 0) : (highPrecision ? 2 : 1);
+                const minDetect = highPrecision ? 0.4 : 0.5;
+                const minTrack = highPrecision ? 0.4 : 0.5;
+                this.pose.setOptions({
+                    modelComplexity: complexity,
+                    smoothLandmarks: true,
+                    minDetectionConfidence: minDetect,
+                    minTrackingConfidence: minTrack
+                });
+            },
+
+            setMainPlayIcons: function(isPlaying) {
+                const main = document.getElementById('btnMainPlay');
+                const path = document.getElementById('btnPathPlay');
+                if (main) main.className = `fa-solid ${isPlaying ? 'fa-pause' : 'fa-play'}`;
+                if (path) path.className = `fa-solid ${isPlaying ? 'fa-pause' : 'fa-play'}`;
+            },
 
             getCameraConstraints: function(useLow) {
                 const width = useLow ? 640 : (isMobile ? 720 : 1280);
@@ -516,6 +549,7 @@
             handleVisibilityChange: function() {
                 this.isAppVisible = !document.hidden;
                 if (!this.isAppVisible) {
+                    if (this.video && !this.video.srcObject) this.video.pause();
                     this.stopProcessing();
                     this.pauseCompareVideos();
                     return;
@@ -581,11 +615,12 @@
                     }
                     
                     this.video.onloadeddata = () => {
-                        this.video.loop = true; 
-                        this.video.play();
-                        this.startProcessing();
+                        this.video.loop = false; 
+                        this.video.currentTime = 0;
+                        this.video.pause();
+                        this.setMainPlayIcons(false);
                         const phaseEl = document.getElementById('valPhase');
-                        if(phaseEl) { phaseEl.innerText = "DALE A GRABAR"; phaseEl.className = "font-bold text-xs uppercase mt-1 text-yellow-400 animate-pulse"; }
+                        if(phaseEl) { phaseEl.innerText = "LISTO PARA REPRODUCIR"; phaseEl.className = "font-bold text-xs uppercase mt-1 text-blue-300"; }
                     };
                     input.value = "";
                 }
@@ -602,6 +637,7 @@
                 this.video.classList.remove('object-contain-video');
                 this.video.classList.add('scale-x-[-1]');
                 this.canvas.classList.add('scale-x-[-1]');
+                this.setMainPlayIcons(false);
                 document.getElementById('camStartOverlay').classList.remove('hide');
                 document.getElementById('aiVideoControls').classList.add('hide');
                 document.getElementById('pathVideoControls').classList.add('hide');
@@ -613,15 +649,14 @@
             
             toggleMainVideoPlay: function() {
                 if (this.video.paused) {
+                    if (this.video.ended) this.video.currentTime = 0;
                     this.video.play();
                     this.startProcessing();
-                    if(document.getElementById('btnMainPlay')) document.getElementById('btnMainPlay').classList.replace('fa-play', 'fa-pause');
-                    if(document.getElementById('btnPathPlay')) document.getElementById('btnPathPlay').classList.replace('fa-play', 'fa-pause');
+                    this.setMainPlayIcons(true);
                 } else {
                     this.video.pause();
                     this.stopProcessing();
-                    if(document.getElementById('btnMainPlay')) document.getElementById('btnMainPlay').classList.replace('fa-pause', 'fa-play');
-                    if(document.getElementById('btnPathPlay')) document.getElementById('btnPathPlay').classList.replace('fa-pause', 'fa-play');
+                    this.setMainPlayIcons(false);
                 }
             },
             
@@ -679,6 +714,16 @@
 
             renderAI: function(lm) {
                 drawConnectors(this.ctx, lm, POSE_CONNECTIONS, {color: 'rgba(255,255,255,0.2)', lineWidth: 2});
+                const keyPoints = [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28];
+                this.ctx.fillStyle = 'rgba(59,130,246,0.9)';
+                keyPoints.forEach((idx) => {
+                    const p = lm[idx];
+                    if (p && p.visibility > 0.5) {
+                        this.ctx.beginPath();
+                        this.ctx.arc(p.x * this.canvas.width, p.y * this.canvas.height, 4, 0, Math.PI * 2);
+                        this.ctx.fill();
+                    }
+                });
                 const shoulder = lm[12]; const hip = lm[24]; const knee = lm[26]; const ankle = lm[28];
                 if (hip && knee && ankle) {
                     const kneeAngle = this.calculateAngle(hip, knee, ankle);
@@ -712,11 +757,21 @@
                     btn.classList.replace('rounded-full', 'rounded-sm'); btn.classList.add('scale-50');
                     document.getElementById('valPhase').innerText = "GRABANDO...";
                     document.getElementById('valPhase').className = "font-bold text-xs uppercase mt-1 text-red-500 animate-pulse";
+                    if (!this.video.srcObject && this.video.paused) {
+                        this.video.play();
+                        this.startProcessing();
+                        this.setMainPlayIcons(true);
+                    }
                 } else {
                     this.isRecording = false;
                     btn.classList.replace('rounded-sm', 'rounded-full'); btn.classList.remove('scale-50');
                     document.getElementById('valPhase').innerText = "ANALIZANDO";
                     document.getElementById('valPhase').className = "font-bold text-xs uppercase mt-1 text-white";
+                    if (!this.video.srcObject) {
+                        this.video.pause();
+                        this.stopProcessing();
+                        this.setMainPlayIcons(false);
+                    }
                     setTimeout(() => this.analyzeLift(), 200);
                 }
             },
