@@ -14,7 +14,40 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
 
-    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        body { background-color: #0f172a; color: #f3f4f6; font-family: 'Roboto', sans-serif; overflow: hidden; }
+        .hide { display: none !important; }
+        .show { display: flex !important; }
+        .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border-top: 1px solid rgba(255,255,255,0.1); }
+        
+        .viewport-container { position: relative; width: 100%; height: 100%; overflow: hidden; background: #000; }
+        video.cam, canvas.cam { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        
+        /* Utility class for uploaded videos to fit properly */
+        .object-contain-video { object-fit: contain !important; }
+        
+        .menu-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .menu-card:active { transform: scale(0.95); }
+
+        /* Range Sliders */
+        input[type=range].speed-slider { -webkit-appearance: none; background: transparent; }
+        input[type=range].speed-slider::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #3b82f6; margin-top: -6px; }
+        input[type=range].speed-slider::-webkit-slider-runnable-track { width: 100%; height: 4px; background: #475569; border-radius: 2px; }
+
+        input[type=range].timeline { -webkit-appearance: none; width: 100%; background: transparent; height: 10px; cursor: pointer; }
+        input[type=range].timeline::-webkit-slider-thumb { -webkit-appearance: none; height: 12px; width: 12px; border-radius: 50%; background: #fff; box-shadow: 0 0 4px rgba(0,0,0,0.5); margin-top: -4px; }
+        input[type=range].timeline::-webkit-slider-runnable-track { width: 100%; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; }
+
+        .vid-controls { opacity: 1; transition: opacity 0.2s; }
+        
+        .vid-wrapper { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
+        .vid-content { width: 100%; height: 100%; object-fit: contain; transform-origin: center center; transition: transform 0.1s linear; cursor: grab; }
+        .vid-content:active { cursor: grabbing; }
+        .scale-flip { transform: scaleX(-1); }
+
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .report-panel { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+    </style>
 </head>
 <body class="h-screen w-screen flex flex-col">
 
@@ -218,17 +251,443 @@
         <div class="p-4 border-t border-gray-800 bg-gray-900"><button onclick="document.getElementById('aiModal').classList.add('hidden')" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl">CERRAR</button></div>
     </div>
 
-    <!-- Core Modules -->
-    <script src="js/utils/mediapipeHandler.js"></script>
-    <script src="js/utils/videoHandler.js"></script>
-    <script src="js/ui/uiManager.js"></script>
-    
-    <!-- Mode Handlers -->
-    <script src="js/modes/aiCoach.js"></script>
-    <script src="js/modes/pathMode.js"></script>
-    <script src="js/modes/compareMode.js"></script>
-    
-    <!-- Main App -->
-    <script src="js/app.js"></script>
+    <script>
+        const app = {
+            mode: null,
+            isCameraActive: false, isRecording: false,
+            pose: null, barPath: [], 
+            frameData: [], minHipHeight: 0, 
+            
+            zoomLevels: { top: 1, bot: 1 }, flipStates: { top: 1, bot: 1 }, panOffsets: { top: {x:0, y:0}, bot: {x:0, y:0} },
+            dragState: { active: false, startX: 0, startY: 0, initialX: 0, initialY: 0, target: null },
+            layoutMode: 'col',
+
+            video: document.getElementById('inputVideo'),
+            canvas: document.getElementById('outputCanvas'),
+            ctx: document.getElementById('outputCanvas').getContext('2d'),
+            
+            init: function() {
+                try {
+                    this.pose = new Pose({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`});
+                    this.pose.setOptions({modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5});
+                    this.pose.onResults(this.onPoseResults.bind(this));
+                    this.setupPanEvents('wrapTop', 'top'); this.setupPanEvents('wrapBot', 'bot');
+                    document.getElementById('vidTop').ontimeupdate = () => this.updateSeekUI('top');
+                    document.getElementById('vidBot').ontimeupdate = () => this.updateSeekUI('bot');
+                    
+                    // Main video seek updater
+                    this.video.ontimeupdate = () => {
+                        const slider = document.getElementById('seekMain');
+                        if (this.video.duration) slider.value = (this.video.currentTime / this.video.duration) * 100;
+                    };
+                } catch(e) { console.error(e); }
+            },
+
+            setMode: function(newMode) {
+                this.mode = newMode;
+                document.getElementById('mainMenu').classList.add('hide');
+                document.getElementById('workspaceHeader').classList.remove('hide');
+                document.getElementById('cameraWorkspace').classList.add('hide');
+                document.getElementById('compareWorkspace').classList.add('hide');
+                document.getElementById('exerciseSelectorWrapper').classList.add('hide');
+                document.getElementById('workspaceTitle').innerText = { 'AI': 'Coach IA', 'PATH': 'Trayectoria', 'COMPARE': 'Comparador' }[newMode];
+
+                if (newMode === 'AI' || newMode === 'PATH') {
+                    document.getElementById('cameraWorkspace').classList.remove('hide');
+                    document.getElementById('camStartOverlay').classList.remove('hide');
+                    document.getElementById('aiVideoControls').classList.add('hide'); 
+                    document.getElementById('pathVideoControls').classList.add('hide');
+                    
+                    // Reset video props
+                    this.video.src = "";
+                    
+                    if (newMode === 'AI') {
+                        document.getElementById('exerciseSelectorWrapper').classList.remove('hide');
+                        document.getElementById('camInstructions').innerText = "Coloca el móvil de perfil para medir ángulos.";
+                    } else {
+                        document.getElementById('camInstructions').innerText = "Graba de perfil. La línea verde seguirá tus muñecas.";
+                    }
+                } else {
+                    document.getElementById('compareWorkspace').classList.remove('hide');
+                }
+            },
+
+            goHome: function() { location.reload(); },
+
+            startCamera: async function() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: 1280, height: 720 }, audio: false });
+                    this.video.srcObject = stream; 
+                    this.video.play(); 
+                    this.isCameraActive = true;
+                    
+                    // Fix styling for camera
+                    this.video.classList.remove('object-contain-video');
+                    this.video.classList.add('scale-x-[-1]');
+                    
+                    document.getElementById('camStartOverlay').classList.add('hide');
+                    if (this.mode === 'AI') document.getElementById('hudAI').classList.remove('hide');
+                    if (this.mode === 'PATH') {
+                        document.getElementById('hudPath').classList.remove('hide');
+                        document.getElementById('hudPathBottom').classList.remove('hide');
+                    }
+                    this.processFrame();
+                } catch (e) { alert("Error: " + e.message); }
+            },
+            
+            handleFileUpload: function(input) {
+                const file = input.files[0];
+                if(file) {
+                    const url = URL.createObjectURL(file);
+                    this.video.srcObject = null; this.video.src = url;
+                    
+                    // Fix styling for uploaded video
+                    this.video.classList.remove('scale-x-[-1]'); 
+                    this.canvas.classList.remove('scale-x-[-1]');
+                    this.video.classList.add('object-contain-video'); // Force contain
+                    
+                    document.getElementById('camStartOverlay').classList.add('hide');
+                    
+                    if (this.mode === 'AI') {
+                        document.getElementById('hudAI').classList.remove('hide');
+                        document.getElementById('aiVideoControls').classList.remove('hide'); // Show controls
+                    }
+                    if (this.mode === 'PATH') {
+                        document.getElementById('hudPath').classList.remove('hide');
+                        document.getElementById('hudPathBottom').classList.remove('hide');
+                        document.getElementById('pathVideoControls').classList.remove('hide'); // Show controls
+                    }
+                    
+                    this.video.onloadeddata = () => {
+                        this.video.loop = true; 
+                        this.video.play();
+                        this.processFrame();
+                        const phaseEl = document.getElementById('valPhase');
+                        if(phaseEl) { phaseEl.innerText = "DALE A GRABAR"; phaseEl.className = "font-bold text-xs uppercase mt-1 text-yellow-400 animate-pulse"; }
+                    };
+                }
+            },
+            
+            resetInput: function() {
+                this.video.pause();
+                this.video.src = "";
+                this.video.srcObject = null;
+                document.getElementById('camStartOverlay').classList.remove('hide');
+                document.getElementById('aiVideoControls').classList.add('hide');
+                document.getElementById('pathVideoControls').classList.add('hide');
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                document.getElementById('valPhase').innerText = "Listo";
+            },
+            
+            toggleMainVideoPlay: function() {
+                if (this.video.paused) {
+                    this.video.play();
+                    if(document.getElementById('btnMainPlay')) document.getElementById('btnMainPlay').classList.replace('fa-play', 'fa-pause');
+                    if(document.getElementById('btnPathPlay')) document.getElementById('btnPathPlay').classList.replace('fa-play', 'fa-pause');
+                } else {
+                    this.video.pause();
+                    if(document.getElementById('btnMainPlay')) document.getElementById('btnMainPlay').classList.replace('fa-pause', 'fa-play');
+                    if(document.getElementById('btnPathPlay')) document.getElementById('btnPathPlay').classList.replace('fa-pause', 'fa-play');
+                }
+            },
+            
+            onSeekMain: function(val) {
+                if (this.video.duration) this.video.currentTime = (val / 100) * this.video.duration;
+            },
+
+            processFrame: async function() {
+                if (this.video.paused || this.video.ended) { requestAnimationFrame(this.processFrame.bind(this)); return; }
+                await this.pose.send({image: this.video}); requestAnimationFrame(this.processFrame.bind(this));
+            },
+
+            onPoseResults: function(results) {
+                this.canvas.width = this.video.videoWidth; this.canvas.height = this.video.videoHeight;
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                const statusEl = document.getElementById('bodyStatus');
+                if (!results.poseLandmarks) {
+                    if(statusEl) statusEl.classList.remove('hide');
+                    return;
+                }
+                if(statusEl) statusEl.classList.add('hide');
+
+                if (this.mode === 'AI') this.renderAI(results.poseLandmarks);
+                else if (this.mode === 'PATH') this.renderPath(results.poseLandmarks);
+            },
+
+            renderPath: function(lm) {
+                const leftWrist = lm[15]; const rightWrist = lm[16];
+                if (leftWrist.visibility > 0.5 && rightWrist.visibility > 0.5) {
+                    const x = (leftWrist.x + rightWrist.x) / 2 * this.canvas.width;
+                    const y = (leftWrist.y + rightWrist.y) / 2 * this.canvas.height;
+                    this.barPath.push({x, y});
+                }
+                if (this.barPath.length > 1) {
+                    this.ctx.beginPath(); this.ctx.moveTo(this.barPath[0].x, this.barPath[0].y);
+                    for (let i = 1; i < this.barPath.length; i++) this.ctx.lineTo(this.barPath[i].x, this.barPath[i].y);
+                    this.ctx.strokeStyle = '#22c55e'; this.ctx.lineWidth = 4; this.ctx.lineCap = 'round'; this.ctx.stroke();
+                }
+            },
+            
+            clearPath: function() { this.barPath = []; },
+
+            renderAI: function(lm) {
+                drawConnectors(this.ctx, lm, POSE_CONNECTIONS, {color: 'rgba(255,255,255,0.2)', lineWidth: 2});
+                const shoulder = lm[12]; const hip = lm[24]; const knee = lm[26]; const ankle = lm[28];
+                if (hip && knee && ankle) {
+                    const kneeAngle = this.calculateAngle(hip, knee, ankle);
+                    const hipAngle = this.calculateAngle(shoulder, hip, knee);
+                    document.getElementById('valKnee').innerText = Math.round(kneeAngle) + "°";
+                    document.getElementById('valHip').innerText = Math.round(hipAngle) + "°";
+                    
+                    if (this.isRecording) {
+                        const elbow = lm[14]; const wrist = lm[16]; // Right arm
+                        const elbowAngle = this.calculateAngle(shoulder, elbow, wrist);
+                        const data = {kneeAngle, hipAngle, hipY: hip.y, elbowAngle};
+                        this.frameData.push(data);
+                        const el = document.getElementById('liveFeedback');
+                        if (kneeAngle < 90) { el.style.opacity = '1'; document.getElementById('feedbackText').innerText = "¡PROFUNDO!"; } 
+                        else { el.style.opacity = '0'; }
+                    }
+                }
+            },
+
+            calculateAngle: function(a, b, c) {
+                const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+                let angle = Math.abs(radians * 180.0 / Math.PI);
+                if (angle > 180.0) angle = 360 - angle;
+                return angle;
+            },
+
+            toggleRecording: function() {
+                const btn = document.getElementById('recInnerAI');
+                if (!this.isRecording) {
+                    this.isRecording = true; this.frameData = [];
+                    btn.classList.replace('rounded-full', 'rounded-sm'); btn.classList.add('scale-50');
+                    document.getElementById('valPhase').innerText = "GRABANDO...";
+                    document.getElementById('valPhase').className = "font-bold text-xs uppercase mt-1 text-red-500 animate-pulse";
+                } else {
+                    this.isRecording = false;
+                    btn.classList.replace('rounded-sm', 'rounded-full'); btn.classList.remove('scale-50');
+                    document.getElementById('valPhase').innerText = "ANALIZANDO";
+                    document.getElementById('valPhase').className = "font-bold text-xs uppercase mt-1 text-white";
+                    setTimeout(() => this.analyzeLift(), 200);
+                }
+            },
+
+            analyzeLift: function() {
+                try {
+                    const type = document.getElementById('exerciseSelect').value;
+                    let faults = []; let msg = ""; let score = 10;
+                    
+                    const isSquatVariant = type.includes('SQUAT') || type.includes('CLEAN') || type.includes('SNATCH');
+                    const isPowerVariant = type.includes('POWER');
+                    const isPush = type.includes('JERK') || type.includes('PRESS');
+                    const isDeadlift = type.includes('DEADLIFT') || type.includes('PULL');
+
+                    if (!this.frameData || this.frameData.length === 0) {
+                        msg = "No se detectó movimiento. Asegúrate de estar en cuadro.";
+                        score = 0;
+                    } else if (this.frameData.length < 10) {
+                        msg = "Video demasiado corto para analizar.";
+                        score = 0;
+                    } else {
+                        const deepest = this.frameData.reduce((prev, curr) => prev.hipY > curr.hipY ? prev : curr);
+                        if (isSquatVariant && !isPowerVariant && !isPush) {
+                            if (deepest.kneeAngle > 105) {
+                                faults.push({icon: 'fa-arrow-down', text: 'Falta Profundidad (No rompiste paralelo)', severity: 'high'});
+                                score -= 4;
+                            } else {
+                                faults.push({icon: 'fa-check', text: 'Buena Profundidad', severity: 'good'});
+                            }
+                        }
+                        if (isPowerVariant) {
+                            if (deepest.kneeAngle < 90) {
+                                faults.push({icon: 'fa-triangle-exclamation', text: 'Bajaste mucho para ser Power', severity: 'medium'});
+                                score -= 3;
+                            } else {
+                                faults.push({icon: 'fa-bolt', text: 'Buena recepción alta (Power)', severity: 'good'});
+                            }
+                        }
+                        if (isDeadlift || type.includes('CLEAN')) {
+                            const minHipAngle = this.frameData.reduce((min, p) => p.hipAngle < min ? p.hipAngle : min, 180);
+                            if (minHipAngle < 60) {
+                                faults.push({icon: 'fa-person-falling', text: 'Torso Inclinado: Pecho colapsado', severity: 'medium'});
+                                score -= 3;
+                            } else {
+                                faults.push({icon: 'fa-check', text: 'Espalda sólida', severity: 'good'});
+                            }
+                        }
+                        if (isPush || type.includes('SNATCH') || type.includes('OH_SQUAT')) {
+                            const maxElbow = this.frameData.reduce((max, p) => p.elbowAngle > max ? p.elbowAngle : max, 0);
+                            if (maxElbow < 160) {
+                                faults.push({icon: 'fa-xmark', text: 'Falta bloqueo de codos (Press out)', severity: 'high'});
+                                score -= 3;
+                            } else {
+                                faults.push({icon: 'fa-check', text: 'Buen bloqueo de codos', severity: 'good'});
+                            }
+                        }
+                        if (score >= 9) msg = "¡Técnica Excelente!";
+                        else if (score >= 6) msg = "Buen intento, corrige los detalles.";
+                        else msg = "Atención a la técnica. Baja el peso.";
+                    }
+
+                    document.getElementById('aiFeedbackText').innerText = msg;
+                    document.getElementById('scoreText').innerText = Math.max(0, score);
+                    const dashOffset = 226 - (226 * (Math.max(0, score)/10));
+                    document.getElementById('scoreCircle').style.strokeDashoffset = dashOffset;
+                    document.getElementById('scoreCircle').style.stroke = score < 5 ? '#ef4444' : (score < 8 ? '#eab308' : '#3b82f6');
+                    const list = document.getElementById('aiFaultsList'); list.innerHTML = "";
+                    if(faults.length === 0 && score > 0) {
+                         list.innerHTML = `<div class="bg-green-900/30 p-3 rounded text-green-400 text-sm"><i class="fa-solid fa-star mr-2"></i>Sin errores graves detectados</div>`;
+                    }
+                    faults.forEach(f => { 
+                        const color = f.severity === 'high' ? 'text-red-400' : (f.severity === 'good' ? 'text-green-400' : 'text-yellow-400');
+                        list.innerHTML += `<div class="flex items-center gap-3 bg-gray-800/50 p-3 rounded-lg"><i class="fa-solid ${f.icon} ${color}"></i><span class="text-sm text-gray-300">${f.text}</span></div>`; 
+                    });
+                    document.getElementById('aiModal').classList.remove('hidden');
+                } catch(e) { alert("Error en análisis: " + e.message); }
+            },
+
+            loadCompareVideo: function(side, input) {
+                const file = input.files[0];
+                if (!file) return;
+                const vid = side === 'top' ? document.getElementById('vidTop') : document.getElementById('vidBot');
+                const overlay = side === 'top' ? document.getElementById('overlayTop') : document.getElementById('overlayBot');
+                vid.src = URL.createObjectURL(file);
+                overlay.classList.add('hide');
+            },
+
+            updateSeekUI: function(id) {
+                const vid = document.getElementById(id === 'top' ? 'vidTop' : 'vidBot');
+                const slider = document.getElementById(id === 'top' ? 'seekTop' : 'seekBot');
+                if (!vid.duration) return;
+                slider.value = (vid.currentTime / vid.duration) * 100;
+            },
+            
+            onSeekInput: function(id, val) {
+                const vid = document.getElementById(id === 'top' ? 'vidTop' : 'vidBot');
+                if (!vid.duration) return;
+                const time = (val / 100) * vid.duration;
+                vid.currentTime = time;
+            },
+
+            toggleZoom: function(id) {
+                const vid = document.getElementById(id === 'top' ? 'vidTop' : 'vidBot');
+                const icon = document.getElementById(id === 'top' ? 'iconZoomTop' : 'iconZoomBot');
+                let z = this.zoomLevels[id];
+                if (z === 1) z = 1.5; else if (z === 1.5) z = 2; else z = 1;
+                this.zoomLevels[id] = z;
+                if (z === 1) this.panOffsets[id] = {x:0, y:0};
+                this.applyTransform(id);
+                if (z === 1) icon.className = "fa-solid fa-magnifying-glass-plus text-xs";
+                else icon.className = "fa-solid fa-magnifying-glass-minus text-xs text-blue-400";
+            },
+
+            toggleFlip: function(id) {
+                const icon = document.getElementById(id === 'top' ? 'iconFlipTop' : 'iconFlipBot');
+                this.flipStates[id] *= -1;
+                this.applyTransform(id);
+                icon.className = this.flipStates[id] === -1 ? "fa-solid fa-right-left text-xs text-blue-400" : "fa-solid fa-right-left text-xs";
+            },
+
+            applyTransform: function(id) {
+                const vid = document.getElementById(id === 'top' ? 'vidTop' : 'vidBot');
+                const z = this.zoomLevels[id];
+                const f = this.flipStates[id];
+                const p = this.panOffsets[id];
+                vid.style.transform = `translate(${p.x}px, ${p.y}px) scale(${z}) scaleX(${f})`;
+            },
+
+            setupPanEvents: function(wrapperId, id) {
+                const wrap = document.getElementById(wrapperId);
+                const startDrag = (e) => {
+                    if (this.zoomLevels[id] === 1) return;
+                    e.preventDefault();
+                    this.dragState.active = true; this.dragState.target = id;
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    this.dragState.startX = clientX; this.dragState.startY = clientY;
+                    this.dragState.initialX = this.panOffsets[id].x; this.dragState.initialY = this.panOffsets[id].y;
+                };
+                const doDrag = (e) => {
+                    if (!this.dragState.active || this.dragState.target !== id) return;
+                    e.preventDefault();
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    const dx = clientX - this.dragState.startX; const dy = clientY - this.dragState.startY;
+                    this.panOffsets[id].x = this.dragState.initialX + dx;
+                    this.panOffsets[id].y = this.dragState.initialY + dy;
+                    this.applyTransform(id);
+                };
+                const endDrag = () => { this.dragState.active = false; this.dragState.target = null; };
+                wrap.addEventListener('mousedown', startDrag); window.addEventListener('mousemove', doDrag); window.addEventListener('mouseup', endDrag);
+                wrap.addEventListener('touchstart', startDrag, {passive: false}); window.addEventListener('touchmove', doDrag, {passive: false}); window.addEventListener('touchend', endDrag);
+            },
+
+            toggleComparePlay: function() {
+                const v1 = document.getElementById('vidTop'); const v2 = document.getElementById('vidBot');
+                const icon = document.getElementById('btnComparePlayIcon');
+                if (v1.paused) {
+                    v1.play(); v2.play(); icon.classList.replace('fa-play', 'fa-pause');
+                } else {
+                    v1.pause(); v2.pause(); icon.classList.replace('fa-pause', 'fa-play');
+                }
+            },
+            
+            toggleSinglePlay: function(id) {
+                const vid = document.getElementById(id === 'top' ? 'vidTop' : 'vidBot');
+                const icon = document.getElementById(id === 'top' ? 'btnPlayTop' : 'btnPlayBot');
+                if (vid.paused) { vid.play(); icon.classList.replace('fa-play', 'fa-pause'); }
+                else { vid.pause(); icon.classList.replace('fa-pause', 'fa-play'); }
+            },
+            
+            seekSingle: function(id, seconds) {
+                const vid = document.getElementById(id === 'top' ? 'vidTop' : 'vidBot');
+                vid.currentTime += seconds;
+            },
+
+            toggleMaximize: function(targetId) {
+                const topCon = document.getElementById('containerTop');
+                const botCon = document.getElementById('containerBot');
+                const iconTop = document.getElementById('iconMaxTop');
+                const iconBot = document.getElementById('iconMaxBot');
+                if (targetId === 'top') {
+                    if (botCon.classList.contains('hide')) { botCon.classList.remove('hide'); iconTop.classList.replace('fa-compress', 'fa-expand'); }
+                    else { botCon.classList.add('hide'); iconTop.classList.replace('fa-expand', 'fa-compress'); }
+                } else {
+                    if (topCon.classList.contains('hide')) { topCon.classList.remove('hide'); iconBot.classList.replace('fa-compress', 'fa-expand'); }
+                    else { topCon.classList.add('hide'); iconBot.classList.replace('fa-expand', 'fa-compress'); }
+                }
+            },
+            
+            toggleLayout: function() {
+                const grid = document.getElementById('compareGrid');
+                const icon = document.getElementById('iconLayout');
+                if (this.layoutMode === 'col') {
+                    this.layoutMode = 'row';
+                    grid.classList.remove('flex-col');
+                    grid.classList.add('flex-row');
+                    icon.classList.remove('fa-rotate-90'); 
+                } else {
+                    this.layoutMode = 'col';
+                    grid.classList.remove('flex-row');
+                    grid.classList.add('flex-col');
+                    icon.classList.add('fa-rotate-90');
+                }
+            },
+
+            setSpeed: function(val) {
+                document.getElementById('vidTop').playbackRate = val;
+                document.getElementById('vidBot').playbackRate = val;
+            },
+
+            seekCompare: function(seconds) {
+                const v1 = document.getElementById('vidTop'); const v2 = document.getElementById('vidBot');
+                v1.currentTime += seconds; v2.currentTime += seconds;
+            }
+        };
+
+        app.init();
+    </script>
 </body>
 </html>
