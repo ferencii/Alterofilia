@@ -1,0 +1,373 @@
+==============================================
+GENERACIÓN DE IMÁGENES PARA HALTEROIA
+Instrucciones: Usar para nanobanana AI
+==============================================
+
+📌 IMPORTANTE: 
+- Fondo: Blanco puro
+- Vista: Perfil completo (90 grados)
+- El muñeco debe ser IDÉNTICO en todas las imágenes
+- Generar una imagen por prompt
+==============================================
+
+════════════════════════════════════════════════════════════════
+🎯 PROMPT BASE - CREAR PRIMERO (Muñeco de Referencia)
+════════════════════════════════════════════════════════════════
+
+PROMPT #0 - CREAR ESTE PRIMERO:
+"A professional fitness training dummy/mannequin in perfect side profile view (90 degrees). 
+The dummy is made of matte gray plastic with articulated joints clearly visible. 
+It's wearing: black fitted tank top/sleeveless shirt and black athletic shorts down to mid-thigh, white athletic socks, and black training shoes. 
+Standing in neutral position with arms at sides, body straight, facing directly to the right.
+White background, studio lighting, professional fitness training manual style illustration.
+High quality, photorealistic rendering."
+
+👉 Una vez generada esta imagen, úsala como referencia visual para todos los siguientes prompts.
+👉 Esta será la base - el muñeco base que mantiene consistencia en vestimenta y apariencia.
+
+════════════════════════════════════════════════════════════════
+🏋️ SENTADILLAS (SQUATS)
+════════════════════════════════════════════════════════════════
+
+--- BACK SQUAT ---
+
+PROMPT #1.1 - Back Squat Posición Inicial:
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts. 
+Dummy is standing upright holding a barbell across shoulders (barbell is black with red weight plates on ends). 
+Barbell rests on shoulders, body fully upright, ready position. 
+White background, studio lighting, training manual style."
+
+PROMPT #1.2 - Back Squat Bajada (90 grados):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy performing back squat at 90-degree knee angle, thighs parallel to ground, barbell still across shoulders (black barbell with red plates).
+Back straight, knees bent, hips lowered, in mid-squat position.
+White background, studio lighting, training manual style."
+
+PROMPT #1.3 - Back Squat Profundo (Paralelo o más):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy at maximum squat depth, knees bent well below parallel, hips lower than knees, barbell across shoulders.
+Back remains straight despite deep position, showing full range of motion.
+White background, studio lighting, training manual style."
+
+PROMPT #1.4 - Back Squat Subida Final:
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy is rising back up from deep squat position, legs starting to extend, barbell still across shoulders.
+Position between deep squat and standing, showing the upward phase of movement.
+White background, studio lighting, training manual style."
+
+--- FRONT SQUAT ---
+
+PROMPT #2.1 - Front Squat Posición Inicial:
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy standing upright holding barbell at shoulder height in front rack position (barbell rests on front of shoulders, elbows high and pointed down).
+Barbell is black with red weight plates, arms bent at elbows supporting barbell, torso very upright.
+White background, studio lighting, training manual style."
+
+PROMPT #2.2 - Front Squat Bajada (Torso Recto):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy performing front squat at 90-degree knee angle, barbell in front rack position, torso COMPLETELY VERTICAL and straight (no forward lean).
+Knees bent, hips lowered, maintaining perfectly upright posture as marker of correct technique.
+White background, studio lighting, training manual style."
+
+PROMPT #2.3 - Front Squat Profundo:
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy at maximum front squat depth, knees below parallel, barbell in front rack position, torso COMPLETELY VERTICAL (straight, no forward collapse).
+This shows the hallmark of proper front squat technique: maintaining upright posture even at depth.
+White background, studio lighting, training manual style."
+
+--- OVERHEAD SQUAT ---
+
+PROMPT #3.1 - Overhead Squat Posición Inicial:
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy standing upright with barbell held directly overhead with fully extended arms, black barbell with red plates.
+Arms completely straight pointing upward, barbell centered over head, body perfectly vertical.
+White background, studio lighting, training manual style."
+
+PROMPT #3.2 - Overhead Squat Bajada (Brazos Extendidos):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy descending into overhead squat at 90-degree knee angle, barbell held directly overhead with FULLY EXTENDED ARMS (arms must show as straight lines).
+Knees bent, hips lowered, maintaining arm extension throughout, showing locked-out elbow position.
+White background, studio lighting, training manual style."
+
+PROMPT #3.3 - Overhead Squat Profundo:
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy at maximum overhead squat depth, knees below parallel, barbell held high overhead with COMPLETELY EXTENDED ARMS, elbow lock clearly visible.
+Deep squat position combined with overhead arm extension, showing full range of this complex movement.
+White background, studio lighting, training manual style."
+
+════════════════════════════════════════════════════════════════
+🏋️ CLEAN (CARGADA)
+════════════════════════════════════════════════════════════════
+
+--- SQUAT CLEAN ---
+
+PROMPT #4.1 - Squat Clean Posición Inicial (Preparado en suelo):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy crouched low in starting position, hands gripping barbell on ground (black barbell with red plates), body coiled, back straight, ready to lift.
+Shows the setup position before the lift begins.
+White background, studio lighting, training manual style."
+
+PROMPT #4.2 - Squat Clean Tirón (Subida, Espalda Recta):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy mid-pull/pull phase, barbell rising off ground, knees extending, back MUST REMAIN STRAIGHT (this is key for clean technique), hips rising explosively.
+Shows the powerful pulling phase with straight spine.
+White background, studio lighting, training manual style."
+
+PROMPT #4.3 - Squat Clean Recepción (En sentadilla profunda):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy in deep squat position receiving barbell on shoulders (front rack position), knees bent below parallel, barbell across front of shoulders.
+This is the catch/receiving phase of the clean at maximum depth.
+White background, studio lighting, training manual style."
+
+PROMPT #4.4 - Squat Clean Final (De pie, terminado):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy standing upright with barbell held on shoulders in front rack position (same as initial front squat position), movement complete.
+Shows the finished position of a successful clean.
+White background, studio lighting, training manual style."
+
+--- POWER CLEAN ---
+
+PROMPT #5.1 - Power Clean Posición Inicial (Preparado):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy crouched at starting position with barbell on ground, hands gripping, back straight, ready to pull.
+Identical starting position as Squat Clean for comparison.
+White background, studio lighting, training manual style."
+
+PROMPT #5.2 - Power Clean Tirón (Espalda Recta):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy mid-pull phase, barbell rising, knees extending powerfully, back STRAIGHT, showing the explosive pulling motion.
+Identical to Squat Clean pull phase.
+White background, studio lighting, training manual style."
+
+PROMPT #5.3 - Power Clean Recepción ALTA (Rodillas menos flexionadas):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy receiving barbell on shoulders BUT with KNEES ONLY SLIGHTLY BENT (NOT deep like Squat Clean), barbell in front rack position.
+Knees must be ABOVE parallel height - this is the key difference from Squat Clean, showing 'high' reception.
+White background, studio lighting, training manual style."
+
+PROMPT #5.4 - Power Clean Final (De pie):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy standing with barbell in front rack position, similar to final position but with less depth than Squat Clean.
+Shows successful Power Clean completion.
+White background, studio lighting, training manual style."
+
+════════════════════════════════════════════════════════════════
+🏋️ SNATCH (ARRANCADA)
+════════════════════════════════════════════════════════════════
+
+--- SQUAT SNATCH ---
+
+PROMPT #6.1 - Squat Snatch Posición Inicial (Preparado, agarre ancho):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy crouched at starting position with barbell on ground, hands gripping VERY WIDE apart (wide snatch grip), back straight, ready.
+Wider grip than clean, showing snatch-specific setup.
+White background, studio lighting, training manual style."
+
+PROMPT #6.2 - Squat Snatch Tirón (Espalda Recta, explosivo):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy in explosive pull phase, barbell rising from ground, knees extending powerfully, back COMPLETELY STRAIGHT, wide grip visible on barbell.
+Shows the intense pulling phase of snatch.
+White background, studio lighting, training manual style."
+
+PROMPT #6.3 - Squat Snatch Recepción (En sentadilla profunda, brazos extendidos):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy in deep squat receiving barbell DIRECTLY OVERHEAD with FULLY EXTENDED ARMS, elbows completely locked, barbell above head.
+Knees bent far below parallel, arms straight up - this shows the receiving position of snatch overhead.
+White background, studio lighting, training manual style."
+
+PROMPT #6.4 - Squat Snatch Final (De pie, brazos bloqueados):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy standing upright with barbell held overhead with COMPLETELY EXTENDED ARMS, barbell directly over head, locked-out position.
+Shows successful squat snatch completion with perfect elbow lock.
+White background, studio lighting, training manual style."
+
+--- POWER SNATCH ---
+
+PROMPT #7.1 - Power Snatch Posición Inicial:
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy crouched at starting position with barbell on ground, wide snatch grip, back straight, ready position.
+Identical starting position as Squat Snatch for comparison.
+White background, studio lighting, training manual style."
+
+PROMPT #7.2 - Power Snatch Tirón:
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy in explosive pull phase, barbell rising, back straight, knees extending powerfully, wide grip visible.
+Identical to Squat Snatch pull phase.
+White background, studio lighting, training manual style."
+
+PROMPT #7.3 - Power Snatch Recepción ALTA (Brazos extendidos pero rodillas menos flexionadas):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy receiving barbell overhead with FULLY EXTENDED LOCKED ARMS BUT with KNEES ONLY SLIGHTLY BENT (NOT deep squat).
+Knees ABOVE parallel - this shows 'high' reception typical of power snatch, with overhead position maintained.
+White background, studio lighting, training manual style."
+
+PROMPT #7.4 - Power Snatch Final:
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy standing with barbell held overhead with locked-out arms, successful power snatch completion.
+Less depth than Squat Snatch but same overhead position.
+White background, studio lighting, training manual style."
+
+════════════════════════════════════════════════════════════════
+🏋️ PUSH & PRESS (MOVIMIENTOS DE EMPUJE)
+════════════════════════════════════════════════════════════════
+
+--- STRICT PRESS ---
+
+PROMPT #8.1 - Strict Press Posición Inicial (Barra en hombros):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy standing upright with barbell resting on front of shoulders (front rack position), elbows bent and forward, ready to press overhead.
+Feet stable, body vertical, no leg bend.
+White background, studio lighting, training manual style."
+
+PROMPT #8.2 - Strict Press Empuje (Brazos extendiendo, piernas RECTAS):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy pressing barbell overhead, arms extending, barbell rising above head.
+CRITICAL: Legs must appear COMPLETELY STRAIGHT with NO knee bend or dip (this is what makes it 'strict').
+White background, studio lighting, training manual style."
+
+PROMPT #8.3 - Strict Press Final (Brazos completamente extendidos):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy with barbell held directly overhead with FULLY EXTENDED ARMS, elbows completely locked, barbell above head.
+Standing position with locked-out arms, feet still firmly planted, no leg movement - showing pure arm/shoulder strength.
+White background, studio lighting, training manual style."
+
+--- PUSH PRESS ---
+
+PROMPT #9.1 - Push Press Posición Inicial (Preparado):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy standing with barbell in front rack position on shoulders, ready for pressing motion.
+Identical to Strict Press setup.
+White background, studio lighting, training manual style."
+
+PROMPT #9.2 - Push Press Dip (Ligera flexión de piernas):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy with barbell on shoulders, knees bent slightly (small dip), hips lowering just a bit to generate power.
+This small knee bend is what differentiates Push Press from Strict Press - shows the dip phase.
+White background, studio lighting, training manual style."
+
+PROMPT #9.3 - Push Press Drive (Empujando arriba, piernas extendiendo):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy explosively driving barbell upward using leg power, knees extending from dip position, arms pressing overhead simultaneously.
+Shows the power generation phase using coordinated arm and leg movement.
+White background, studio lighting, training manual style."
+
+PROMPT #9.4 - Push Press Final (Brazos bloqueados):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy standing with barbell held overhead with FULLY EXTENDED ARMS, locked-out position, standing neutral.
+Shows successful Push Press completion with overhead position locked.
+White background, studio lighting, training manual style."
+
+--- SPLIT JERK ---
+
+PROMPT #10.1 - Split Jerk Posición Inicial:
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy standing with barbell in front rack position on shoulders, feet together, ready to jerk.
+Starting position for the jerk movement.
+White background, studio lighting, training manual style."
+
+PROMPT #10.2 - Split Jerk Dip (Flexión profunda):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy in deep dip position with barbell on shoulders, knees bent significantly, hips lowered, coiled position.
+This is the loading/dip phase for generating maximum power for the jerk.
+White background, studio lighting, training manual style."
+
+PROMPT #10.3 - Split Jerk Drive-Split (Piernas separadas, brazos empujando):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy in split position: one leg forward (bent), one leg back (bent), barbell being pressed overhead with extended arms.
+Shows the characteristic 'split' stance that defines Split Jerk, with one foot stepping forward and one back while pressing.
+White background, studio lighting, training manual style."
+
+PROMPT #10.4 - Split Jerk Final (Brazos bloqueados, split estable):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy standing in split position (one leg forward, one leg back) with barbell held overhead with FULLY EXTENDED ARMS, locked out.
+Shows the completed Split Jerk with overhead lockout and athletic split stance.
+White background, studio lighting, training manual style."
+
+════════════════════════════════════════════════════════════════
+🏋️ TIRONES (DEADLIFTS & PULLS)
+════════════════════════════════════════════════════════════════
+
+--- DEADLIFT ---
+
+PROMPT #11.1 - Deadlift Posición Inicial (En suelo):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy crouched at starting position, hands gripping barbell on ground, back COMPLETELY STRAIGHT (this is critical for deadlift), knees bent, hips lowered.
+Shows the proper starting position with straight back.
+White background, studio lighting, training manual style."
+
+PROMPT #11.2 - Deadlift Media Subida (Espalda recta, potencia):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy lifting barbell from ground, body rising, legs extending, back MUST REMAIN COMPLETELY STRAIGHT (no rounding or forward lean).
+Shows mid-pull phase maintaining that critical straight spine.
+White background, studio lighting, training manual style."
+
+PROMPT #11.3 - Deadlift Final (De pie, completado):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy standing upright holding barbell, hips fully extended, knees straight, barbell held at thigh level with straight arms.
+Shows successful deadlift completion with perfect upright posture.
+White background, studio lighting, training manual style."
+
+--- CLEAN PULL ---
+
+PROMPT #12.1 - Clean Pull Posición Inicial:
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy crouched with hands gripping barbell on ground in clean grip (medium width grip, closer than snatch), back STRAIGHT.
+Starting position for clean pull (similar to clean starting position).
+White background, studio lighting, training manual style."
+
+PROMPT #12.2 - Clean Pull Tirón (Explosivo, espalda recta):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy in explosive pull phase, barbell rising from ground, knees and hips extending powerfully, back COMPLETELY STRAIGHT throughout.
+Shows powerful pulling motion maintaining straight spine (critical for clean pull technique).
+White background, studio lighting, training manual style."
+
+PROMPT #12.3 - Clean Pull Final (De pie, completado):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy standing upright with barbell pulled to hip height, arms bent slightly, body extended, showing the finish position of clean pull.
+Shows successful completion of the pulling motion - barbell ends at hip level rather than caught on shoulders.
+White background, studio lighting, training manual style."
+
+--- SNATCH PULL ---
+
+PROMPT #13.1 - Snatch Pull Posición Inicial:
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy crouched with hands gripping barbell in WIDE snatch grip, barbell on ground, back STRAIGHT, ready position.
+Starting position showing the wider grip characteristic of snatch vs clean pull.
+White background, studio lighting, training manual style."
+
+PROMPT #13.2 - Snatch Pull Tirón (Potencia, espalda recta):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy in explosive pull phase with wide grip, barbell rising from ground, body extending powerfully, back COMPLETELY STRAIGHT.
+Shows intense pulling motion with snatch-width grip and maintained straight spine.
+White background, studio lighting, training manual style."
+
+PROMPT #13.3 - Snatch Pull Final (De pie, completado):
+"Same fitness dummy mannequin from base image, side profile view, wearing identical black tank top and shorts.
+Dummy standing upright with barbell pulled high toward chest (higher than clean pull due to wide grip), arms bent, body fully extended.
+Shows the finished snatch pull position - similar to clean pull but with barbell pulled higher due to wider grip.
+White background, studio lighting, training manual style."
+
+════════════════════════════════════════════════════════════════
+📝 INSTRUCCIONES FINALES PARA NANOBANANA
+════════════════════════════════════════════════════════════════
+
+1. GENERAR PRIMERO el PROMPT #0 (Base) - crear referencia del muñeco
+2. Para CADA PROMPT, menciona "Same fitness dummy mannequin from base image" para mantener EXACTA consistencia
+3. TODOS los prompts deben especificar "side profile view" (perfil)
+4. TODOS los prompts deben especificar "White background"
+5. TODOS los prompts deben especificar la MISMA ropa: "identical black tank top and shorts"
+6. TODOS los prompts deben especificar "studio lighting, training manual style"
+7. Generar una imagen por prompt
+8. Si alguna imagen se ve inconsistente, regenerar con el mismo prompt
+
+ÓRDENES DE GENERACIÓN RECOMENDADA:
+1. Generar PROMPT #0 primero
+2. Luego generar todos los SQUAT (#1.1-1.4, #2.1-2.3, #3.1-3.3)
+3. Luego CLEAN (#4.1-4.4, #5.1-5.4)
+4. Luego SNATCH (#6.1-6.4, #7.1-7.4)
+5. Luego PUSH/PRESS (#8.1-8.3, #9.1-9.4, #10.1-10.4)
+6. Finalmente TIRONES (#11.1-11.3, #12.1-12.3, #13.1-13.3)
+
+════════════════════════════════════════════════════════════════
+Total: 1 base + 49 prompts específicos = 50 imágenes para guía completa
+════════════════════════════════════════════════════════════════

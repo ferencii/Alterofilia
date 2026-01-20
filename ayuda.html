@@ -5,13 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="true">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="color-scheme" content="dark">
     <title>Guía de Grabación - HalteroAI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700;900&display=swap" rel="stylesheet">
     <style>
+        :root { --safe-top: env(safe-area-inset-top); --safe-right: env(safe-area-inset-right); --safe-bottom: env(safe-area-inset-bottom); --safe-left: env(safe-area-inset-left); }
         * { -webkit-tap-highlight-color: transparent; }
         html, body { width: 100%; height: 100%; }
-        body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #f3f4f6; font-family: 'Roboto', sans-serif; }
+        body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #f3f4f6; font-family: 'Roboto', sans-serif; min-height: 100dvh; }
         .section-header { background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%); padding: 2rem; border-radius: 1rem; margin-bottom: 2rem; box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2); }
         .exercise-card { background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 1rem; padding: 1.5rem; margin-bottom: 1.5rem; transition: all 0.3s; }
         .exercise-card:hover { border-color: rgba(59, 130, 246, 0.5); box-shadow: 0 10px 30px rgba(59, 130, 246, 0.1); }
@@ -25,7 +29,7 @@
         .step-number { display: inline-block; background: #3b82f6; color: white; width: 2rem; height: 2rem; border-radius: 50%; text-align: center; line-height: 2rem; font-weight: bold; margin-right: 0.5rem; }
         .toc-button { background: #3b82f6; color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; margin: 0.5rem; display: inline-block; text-decoration: none; transition: all 0.3s; }
         .toc-button:hover { background: #1e40af; transform: translateY(-2px); }
-        .back-button { position: fixed; bottom: 2rem; right: 2rem; background: #3b82f6; color: white; width: 3rem; height: 3rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.5rem; z-index: 50; box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3); }
+        .back-button { position: fixed; bottom: calc(2rem + var(--safe-bottom)); right: calc(2rem + var(--safe-right)); background: #3b82f6; color: white; width: 3rem; height: 3rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.5rem; z-index: 50; box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3); }
     </style>
 </head>
 <body class="p-4 sm:p-6">
