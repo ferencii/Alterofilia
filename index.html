@@ -58,6 +58,8 @@
         .vid-content { width: 100%; height: 100%; object-fit: contain; transform-origin: center center; cursor: grab; -webkit-user-select: none; user-select: none; }
         .vid-content:active { cursor: grabbing; }
         .scale-flip { transform: scaleX(-1); }
+        #flashOverlay { opacity: 0; transition: opacity 0.15s ease; }
+        #flashOverlay.flash-on { opacity: 0.9; }
 
         @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .report-panel { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
@@ -168,6 +170,9 @@
             <button id="guideToggleBtn" ontouchstart="" onclick="app.toggleExerciseGuide()" class="glass px-2 py-1 rounded text-[10px] text-blue-300 border border-blue-500/30 hover:text-white active:text-blue-200 hide">
                 <i class="fa-solid fa-circle-question mr-1"></i>Guia
             </button>
+            <button id="aiSettingsToggleBtn" ontouchstart="" onclick="app.toggleAiSettings()" class="glass px-2 py-1 rounded text-[10px] text-gray-300 border border-slate-500/30 hover:text-white active:text-gray-200 hide">
+                <i class="fa-solid fa-gear mr-1"></i>Ajustes
+            </button>
         </div>
     </div>
 
@@ -186,6 +191,8 @@
                 <span id="feedbackText" class="text-2xl font-black text-white italic uppercase tracking-widest">GOOD LIFT</span>
             </div>
         </div>
+        
+        <div id="flashOverlay" class="absolute inset-0 bg-white pointer-events-none z-50"></div>
 
         <!-- Start Overlay -->
         <div id="camStartOverlay" class="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center z-30">
@@ -237,6 +244,29 @@
                 </div>
                 <div id="exerciseGuideTitle" class="font-bold text-sm text-white mb-2">Ejercicio</div>
                 <ul id="exerciseGuideList" class="text-xs text-gray-300 space-y-1 list-disc list-inside"></ul>
+            </div>
+        </div>
+        
+        <!-- AI Settings Panel -->
+        <div id="aiSettingsPanel" class="absolute top-24 right-4 w-[92%] sm:w-[320px] max-w-sm z-30 hide">
+            <div class="glass rounded-xl p-4 border border-slate-500/20">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="text-xs uppercase tracking-widest text-gray-300 font-bold">Ajustes de grabacion</div>
+                    <div class="text-[10px] text-gray-400">Coach IA</div>
+                </div>
+                <label class="flex items-center justify-between text-xs text-gray-300 py-1">
+                    <span>Grabacion por gestos</span>
+                    <input id="settingGestures" type="checkbox" onchange="app.setSetting('gestureRecord', this.checked)">
+                </label>
+                <label class="flex items-center justify-between text-xs text-gray-300 py-1">
+                    <span>Confirmacion sonora</span>
+                    <input id="settingSound" type="checkbox" onchange="app.setSetting('soundConfirm', this.checked)">
+                </label>
+                <label class="flex items-center justify-between text-xs text-gray-300 py-1">
+                    <span>Confirmacion con flash</span>
+                    <input id="settingFlash" type="checkbox" onchange="app.setSetting('flashConfirm', this.checked)">
+                </label>
+                <p class="text-[10px] text-gray-400 mt-2">Gestos: levanta ambas manos sobre los hombros para iniciar/detener.</p>
             </div>
         </div>
 
@@ -375,6 +405,9 @@
             zoomLevels: { top: 1, bot: 1 }, flipStates: { top: 1, bot: 1 }, panOffsets: { top: {x:0, y:0}, bot: {x:0, y:0} },
             dragState: { active: false, startX: 0, startY: 0, initialX: 0, initialY: 0, target: null },
             layoutMode: 'col',
+            settings: { gestureRecord: false, soundConfirm: true, flashConfirm: false },
+            gestureState: { holdFrames: 0, lastToggleTime: 0 },
+            audioCtx: null,
             exerciseGuides: {
                 DEFAULT: {
                     title: 'Guia general',
@@ -558,6 +591,7 @@
                     if (exerciseSelect) {
                         exerciseSelect.addEventListener('change', () => this.updateExerciseGuide());
                     }
+                    this.syncSettingsUI();
                     this.video.onplay = () => this.startProcessing();
                     this.video.onpause = () => this.stopProcessing();
                     this.video.onended = () => {
@@ -606,11 +640,13 @@
                 document.getElementById('compareWorkspace').classList.add('hide');
                 document.getElementById('exerciseSelectorWrapper').classList.add('hide');
                 document.getElementById('guideToggleBtn').classList.add('hide');
+                document.getElementById('aiSettingsToggleBtn').classList.add('hide');
                 document.getElementById('hudAI').classList.add('hide');
                 document.getElementById('hudPath').classList.add('hide');
                 document.getElementById('hudPathBottom').classList.add('hide');
                 document.getElementById('bodyStatus').classList.add('hide');
                 document.getElementById('exerciseGuide').classList.add('hide');
+                document.getElementById('aiSettingsPanel').classList.add('hide');
                 document.getElementById('workspaceTitle').innerText = { 'AI': 'Coach IA', 'PATH': 'Trayectoria', 'COMPARE': 'Comparador' }[newMode];
 
                 if (newMode === 'AI' || newMode === 'PATH') {
@@ -630,6 +666,7 @@
                     if (newMode === 'AI') {
                         document.getElementById('exerciseSelectorWrapper').classList.remove('hide');
                         document.getElementById('guideToggleBtn').classList.remove('hide');
+                        document.getElementById('aiSettingsToggleBtn').classList.remove('hide');
                         document.getElementById('camInstructions').innerText = "Coloca el móvil de perfil para medir ángulos.";
                     } else {
                         document.getElementById('camInstructions').innerText = "Graba de perfil. La línea verde seguirá tus muñecas.";
@@ -674,6 +711,106 @@
                     panel.classList.add('hide');
                     btn.classList.remove('text-white');
                     btn.classList.add('text-blue-300');
+                }
+            },
+
+            syncSettingsUI: function() {
+                const g = document.getElementById('settingGestures');
+                const s = document.getElementById('settingSound');
+                const f = document.getElementById('settingFlash');
+                if (g) g.checked = !!this.settings.gestureRecord;
+                if (s) s.checked = !!this.settings.soundConfirm;
+                if (f) f.checked = !!this.settings.flashConfirm;
+            },
+
+            setSetting: function(key, value) {
+                if (!this.settings.hasOwnProperty(key)) return;
+                this.settings[key] = !!value;
+                if (key === 'gestureRecord' && !this.settings[key]) {
+                    this.gestureState.holdFrames = 0;
+                }
+                this.syncSettingsUI();
+            },
+
+            toggleAiSettings: function() {
+                if (this.mode !== 'AI') return;
+                const panel = document.getElementById('aiSettingsPanel');
+                const btn = document.getElementById('aiSettingsToggleBtn');
+                if (!panel || !btn) return;
+                const isHidden = panel.classList.contains('hide');
+                if (isHidden) {
+                    panel.classList.remove('hide');
+                    this.syncSettingsUI();
+                    btn.classList.add('text-white');
+                    btn.classList.remove('text-gray-300');
+                } else {
+                    panel.classList.add('hide');
+                    btn.classList.remove('text-white');
+                    btn.classList.add('text-gray-300');
+                }
+            },
+
+            confirmFeedback: function(type) {
+                if (this.settings.soundConfirm) this.playBeep(type === 'start' ? 880 : 440);
+                if (this.settings.flashConfirm) this.flashFeedback();
+            },
+
+            playBeep: function(freq) {
+                try {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (!AudioCtx) return;
+                    if (!this.audioCtx) this.audioCtx = new AudioCtx();
+                    if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+                    const ctx = this.audioCtx;
+                    const o = ctx.createOscillator();
+                    const g = ctx.createGain();
+                    const now = ctx.currentTime;
+                    o.type = 'sine';
+                    o.frequency.value = freq;
+                    g.gain.setValueAtTime(0.0001, now);
+                    g.gain.exponentialRampToValueAtTime(0.2, now + 0.02);
+                    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+                    o.connect(g); g.connect(ctx.destination);
+                    o.start(now);
+                    o.stop(now + 0.18);
+                } catch (e) {}
+            },
+
+            flashFeedback: function() {
+                const doOverlay = () => {
+                    const overlay = document.getElementById('flashOverlay');
+                    if (!overlay) return;
+                    overlay.classList.add('flash-on');
+                    setTimeout(() => overlay.classList.remove('flash-on'), 120);
+                };
+                try {
+                    const track = this.stream && this.stream.getVideoTracks ? this.stream.getVideoTracks()[0] : null;
+                    if (track && track.getCapabilities && track.getCapabilities().torch) {
+                        track.applyConstraints({ advanced: [{ torch: true }] })
+                            .then(() => setTimeout(() => track.applyConstraints({ advanced: [{ torch: false }] }), 120))
+                            .catch(() => doOverlay());
+                        return;
+                    }
+                } catch (e) {}
+                doOverlay();
+            },
+
+            detectGestureToggle: function(lm) {
+                if (!this.settings.gestureRecord) return;
+                if (!this.isCameraActive || !this.video || !this.video.srcObject) return;
+                const leftWrist = lm[15]; const rightWrist = lm[16];
+                const leftShoulder = lm[11]; const rightShoulder = lm[12];
+                if (!leftWrist || !rightWrist || !leftShoulder || !rightShoulder) return;
+                if (leftWrist.visibility < 0.6 || rightWrist.visibility < 0.6) return;
+                const leftUp = leftWrist.y < (leftShoulder.y - 0.05);
+                const rightUp = rightWrist.y < (rightShoulder.y - 0.05);
+                if (leftUp && rightUp) this.gestureState.holdFrames += 1;
+                else this.gestureState.holdFrames = 0;
+                const now = performance.now();
+                if (this.gestureState.holdFrames >= 6 && (now - this.gestureState.lastToggleTime) > 1200) {
+                    this.gestureState.holdFrames = 0;
+                    this.gestureState.lastToggleTime = now;
+                    this.toggleRecording();
                 }
             },
 
@@ -909,25 +1046,77 @@
 
             onPoseResults: function(results) {
                 if (this.mode !== 'AI' && this.mode !== 'PATH') return;
-                if (!this.video.videoWidth || !this.video.videoHeight) return;
-                this.canvas.width = this.video.videoWidth; this.canvas.height = this.video.videoHeight;
+                const map = this.getCoverMapping();
+                if (!map) return;
+                this.currentMap = map;
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
                 const statusEl = document.getElementById('bodyStatus');
                 if (!results.poseLandmarks) {
                     if(statusEl) statusEl.classList.remove('hide');
+                    this.currentMap = null;
                     return;
                 }
                 if(statusEl) statusEl.classList.add('hide');
 
                 if (this.mode === 'AI') this.renderAI(results.poseLandmarks);
                 else if (this.mode === 'PATH') this.renderPath(results.poseLandmarks);
+                this.currentMap = null;
+            },
+
+            getCoverMapping: function() {
+                if (!this.video) return null;
+                const vw = this.video.videoWidth;
+                const vh = this.video.videoHeight;
+                const cw = this.video.clientWidth;
+                const ch = this.video.clientHeight;
+                if (!vw || !vh || !cw || !ch) return null;
+                if (this.canvas.width !== cw || this.canvas.height !== ch) {
+                    this.canvas.width = cw; this.canvas.height = ch;
+                }
+                const scale = Math.max(cw / vw, ch / vh);
+                const scaledW = vw * scale;
+                const scaledH = vh * scale;
+                const offsetX = (scaledW - cw) / 2;
+                const offsetY = (scaledH - ch) / 2;
+                return { vw, vh, cw, ch, scale, offsetX, offsetY };
+            },
+
+            mapLandmark: function(lm, map) {
+                return {
+                    x: (lm.x * map.vw * map.scale) - map.offsetX,
+                    y: (lm.y * map.vh * map.scale) - map.offsetY
+                };
+            },
+
+            drawPoseConnections: function(lm, map) {
+                if (!window.POSE_CONNECTIONS) return;
+                this.ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                this.ctx.lineWidth = 2;
+                this.ctx.lineCap = 'round';
+                POSE_CONNECTIONS.forEach((conn) => {
+                    const a = (Array.isArray(conn) ? conn[0] : conn.start);
+                    const b = (Array.isArray(conn) ? conn[1] : conn.end);
+                    const p1 = lm[a]; const p2 = lm[b];
+                    if (!p1 || !p2) return;
+                    if (p1.visibility < 0.5 || p2.visibility < 0.5) return;
+                    const m1 = this.mapLandmark(p1, map);
+                    const m2 = this.mapLandmark(p2, map);
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(m1.x, m1.y);
+                    this.ctx.lineTo(m2.x, m2.y);
+                    this.ctx.stroke();
+                });
             },
 
             renderPath: function(lm) {
+                const map = this.currentMap || this.getCoverMapping();
+                if (!map) return;
                 const leftWrist = lm[15]; const rightWrist = lm[16];
                 if (leftWrist.visibility > 0.5 && rightWrist.visibility > 0.5) {
-                    const x = (leftWrist.x + rightWrist.x) / 2 * this.canvas.width;
-                    const y = (leftWrist.y + rightWrist.y) / 2 * this.canvas.height;
+                    const lw = this.mapLandmark(leftWrist, map);
+                    const rw = this.mapLandmark(rightWrist, map);
+                    const x = (lw.x + rw.x) / 2;
+                    const y = (lw.y + rw.y) / 2;
                     this.barPath.push({x, y});
                 }
                 if (this.barPath.length > 1) {
@@ -940,14 +1129,17 @@
             clearPath: function() { this.barPath = []; },
 
             renderAI: function(lm) {
-                drawConnectors(this.ctx, lm, POSE_CONNECTIONS, {color: 'rgba(255,255,255,0.2)', lineWidth: 2});
+                const map = this.currentMap || this.getCoverMapping();
+                if (!map) return;
+                this.drawPoseConnections(lm, map);
                 const keyPoints = [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28];
                 this.ctx.fillStyle = 'rgba(59,130,246,0.9)';
                 keyPoints.forEach((idx) => {
                     const p = lm[idx];
                     if (p && p.visibility > 0.5) {
+                        const pt = this.mapLandmark(p, map);
                         this.ctx.beginPath();
-                        this.ctx.arc(p.x * this.canvas.width, p.y * this.canvas.height, 4, 0, Math.PI * 2);
+                        this.ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
                         this.ctx.fill();
                     }
                 });
@@ -955,8 +1147,8 @@
                 if (hip && knee && ankle) {
                     const kneeAngle = this.calculateAngle(hip, knee, ankle);
                     const hipAngle = this.calculateAngle(shoulder, hip, knee);
-                    document.getElementById('valKnee').innerText = Math.round(kneeAngle) + "°";
-                    document.getElementById('valHip').innerText = Math.round(hipAngle) + "°";
+                    document.getElementById('valKnee').innerText = Math.round(kneeAngle) + " grados";
+                    document.getElementById('valHip').innerText = Math.round(hipAngle) + " grados";
                     
                     if (this.isRecording) {
                         const elbow = lm[14]; const wrist = lm[16]; // Right arm
@@ -964,10 +1156,11 @@
                         const data = {kneeAngle, hipAngle, hipY: hip.y, elbowAngle};
                         this.frameData.push(data);
                         const el = document.getElementById('liveFeedback');
-                        if (kneeAngle < 90) { el.style.opacity = '1'; document.getElementById('feedbackText').innerText = "¡PROFUNDO!"; } 
+                        if (kneeAngle < 90) { el.style.opacity = '1'; document.getElementById('feedbackText').innerText = "PROFUNDO!"; } 
                         else { el.style.opacity = '0'; }
                     }
                 }
+                this.detectGestureToggle(lm);
             },
 
             calculateAngle: function(a, b, c) {
@@ -989,6 +1182,7 @@
                         this.startProcessing();
                         this.setMainPlayIcons(true);
                     }
+                    this.confirmFeedback('start');
                 } else {
                     this.isRecording = false;
                     btn.classList.replace('rounded-sm', 'rounded-full'); btn.classList.remove('scale-50');
@@ -999,6 +1193,7 @@
                         this.stopProcessing();
                         this.setMainPlayIcons(false);
                     }
+                    this.confirmFeedback('stop');
                     setTimeout(() => this.analyzeLift(), 200);
                 }
             },
