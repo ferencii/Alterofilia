@@ -16,6 +16,7 @@
     
     <!-- MediaPipe -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
 
@@ -266,7 +267,7 @@
                     <span>Confirmacion con flash</span>
                     <input id="settingFlash" type="checkbox" onchange="app.setSetting('flashConfirm', this.checked)">
                 </label>
-                <p class="text-[10px] text-gray-400 mt-2">Gestos: levanta ambas manos sobre los hombros para iniciar/detener.</p>
+                <p class="text-[10px] text-gray-400 mt-2">Gestos: palma abierta = inicio/paro. Dedos levantados = inicio con retardo (1s por dedo).</p>
             </div>
         </div>
 
@@ -399,14 +400,15 @@
             currentObjectUrl: null,
             compareObjectUrls: { top: null, bot: null },
             stream: null,
-            pose: null, barPath: [], 
+            pose: null, hands: null, barPath: [], 
             frameData: [], minHipHeight: 0, 
+            currentMap: null,
             
             zoomLevels: { top: 1, bot: 1 }, flipStates: { top: 1, bot: 1 }, panOffsets: { top: {x:0, y:0}, bot: {x:0, y:0} },
             dragState: { active: false, startX: 0, startY: 0, initialX: 0, initialY: 0, target: null },
             layoutMode: 'col',
             settings: { gestureRecord: false, soundConfirm: true, flashConfirm: false },
-            gestureState: { holdFrames: 0, lastToggleTime: 0 },
+            gestureState: { holdFrames: 0, lastToggleTime: 0, countdown: { active: false, target: 0, startTime: 0, lastTick: -1 } },
             audioCtx: null,
             exerciseGuides: {
                 DEFAULT: {
@@ -584,6 +586,9 @@
                     this.pose = new Pose({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`});
                     this.configurePose('AI');
                     this.pose.onResults(this.onPoseResults.bind(this));
+                    this.hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+                    this.configureHands();
+                    this.hands.onResults(this.onHandsResults.bind(this));
                     this.setupPanEvents('wrapTop', 'top'); this.setupPanEvents('wrapBot', 'bot');
                     document.getElementById('vidTop').ontimeupdate = () => this.updateSeekUI('top');
                     document.getElementById('vidBot').ontimeupdate = () => this.updateSeekUI('bot');
@@ -728,6 +733,7 @@
                 this.settings[key] = !!value;
                 if (key === 'gestureRecord' && !this.settings[key]) {
                     this.gestureState.holdFrames = 0;
+                    this.cancelGestureCountdown();
                 }
                 this.syncSettingsUI();
             },
@@ -753,6 +759,22 @@
             confirmFeedback: function(type) {
                 if (this.settings.soundConfirm) this.playBeep(type === 'start' ? 880 : 440);
                 if (this.settings.flashConfirm) this.flashFeedback();
+            },
+
+            confirmTick: function() {
+                if (this.settings.soundConfirm) this.playBeep(660);
+                if (this.settings.flashConfirm) this.flashFeedback();
+            },
+
+            confirmDouble: function() {
+                if (this.settings.soundConfirm) {
+                    this.playBeep(880);
+                    setTimeout(() => this.playBeep(880), 140);
+                }
+                if (this.settings.flashConfirm) {
+                    this.flashFeedback();
+                    setTimeout(() => this.flashFeedback(), 140);
+                }
             },
 
             playBeep: function(freq) {
@@ -795,23 +817,114 @@
                 doOverlay();
             },
 
-            detectGestureToggle: function(lm) {
+            onHandsResults: function(results) {
                 if (!this.settings.gestureRecord) return;
-                if (!this.isCameraActive || !this.video || !this.video.srcObject) return;
-                const leftWrist = lm[15]; const rightWrist = lm[16];
-                const leftShoulder = lm[11]; const rightShoulder = lm[12];
-                if (!leftWrist || !rightWrist || !leftShoulder || !rightShoulder) return;
-                if (leftWrist.visibility < 0.6 || rightWrist.visibility < 0.6) return;
-                const leftUp = leftWrist.y < (leftShoulder.y - 0.05);
-                const rightUp = rightWrist.y < (rightShoulder.y - 0.05);
-                if (leftUp && rightUp) this.gestureState.holdFrames += 1;
-                else this.gestureState.holdFrames = 0;
-                const now = performance.now();
-                if (this.gestureState.holdFrames >= 6 && (now - this.gestureState.lastToggleTime) > 1200) {
-                    this.gestureState.holdFrames = 0;
-                    this.gestureState.lastToggleTime = now;
-                    this.toggleRecording();
+                if (this.mode !== 'AI') return;
+                if (!this.isCameraActive || !this.video || !this.video.srcObject) {
+                    this.cancelGestureCountdown();
+                    return;
                 }
+                const handLm = results && results.multiHandLandmarks ? results.multiHandLandmarks[0] : null;
+                if (!handLm) {
+                    this.gestureState.holdFrames = 0;
+                    this.cancelGestureCountdown();
+                    return;
+                }
+                const handedness = results && results.multiHandedness && results.multiHandedness[0]
+                    ? results.multiHandedness[0].label
+                    : null;
+                this.detectGestureToggle(handLm, handedness);
+            },
+
+            detectGestureToggle: function(handLm, handedness) {
+                if (!handLm) return;
+                const now = performance.now();
+                const fingers = this.getFingerState(handLm, handedness);
+                const fingerCount = fingers.count;
+                const openPalm = fingers.openPalm;
+                const wrist = handLm[0];
+                const isRaised = wrist && wrist.y < 0.65;
+                if (!isRaised) {
+                    this.gestureState.holdFrames = 0;
+                    this.cancelGestureCountdown();
+                    return;
+                }
+                if ((now - this.gestureState.lastToggleTime) < 1200) {
+                    this.cancelGestureCountdown();
+                    return;
+                }
+                if (openPalm) {
+                    this.cancelGestureCountdown();
+                    this.gestureState.holdFrames += 1;
+                    if (this.gestureState.holdFrames >= 6 && (now - this.gestureState.lastToggleTime) > 1200) {
+                        this.gestureState.holdFrames = 0;
+                        this.gestureState.lastToggleTime = now;
+                        this.toggleRecording();
+                    }
+                    return;
+                }
+                this.gestureState.holdFrames = 0;
+                if (this.isRecording) {
+                    this.cancelGestureCountdown();
+                    return;
+                }
+                if (fingerCount >= 1) {
+                    this.updateGestureCountdown(fingerCount, now);
+                } else {
+                    this.cancelGestureCountdown();
+                }
+            },
+
+            updateGestureCountdown: function(targetCount, now) {
+                const gs = this.gestureState.countdown;
+                if (!gs.active || gs.target !== targetCount) {
+                    gs.active = true;
+                    gs.target = targetCount;
+                    gs.startTime = now;
+                    gs.lastTick = -1;
+                }
+                const elapsed = Math.floor((now - gs.startTime) / 1000);
+                if (elapsed !== gs.lastTick && elapsed >= 1 && elapsed < gs.target) {
+                    gs.lastTick = elapsed;
+                    this.confirmTick();
+                }
+                if (elapsed >= gs.target) {
+                    gs.active = false;
+                    gs.target = 0;
+                    gs.startTime = 0;
+                    gs.lastTick = -1;
+                    this.gestureState.lastToggleTime = now;
+                    this.toggleRecording({ skipConfirm: true, doubleConfirm: true });
+                }
+            },
+
+            cancelGestureCountdown: function() {
+                const gs = this.gestureState.countdown;
+                gs.active = false;
+                gs.target = 0;
+                gs.startTime = 0;
+                gs.lastTick = -1;
+            },
+
+            getFingerState: function(handLm, handedness) {
+                const thumbTip = handLm[4]; const thumbIp = handLm[3];
+                const indexTip = handLm[8]; const indexPip = handLm[6];
+                const middleTip = handLm[12]; const middlePip = handLm[10];
+                const ringTip = handLm[16]; const ringPip = handLm[14];
+                const pinkyTip = handLm[20]; const pinkyPip = handLm[18];
+                const indexExt = indexTip.y < indexPip.y - 0.01;
+                const middleExt = middleTip.y < middlePip.y - 0.01;
+                const ringExt = ringTip.y < ringPip.y - 0.01;
+                const pinkyExt = pinkyTip.y < pinkyPip.y - 0.01;
+                let thumbExt = false;
+                if (thumbTip && thumbIp) {
+                    if (handedness === 'Right') thumbExt = thumbTip.x < thumbIp.x - 0.01;
+                    else if (handedness === 'Left') thumbExt = thumbTip.x > thumbIp.x + 0.01;
+                    else thumbExt = Math.abs(thumbTip.x - thumbIp.x) > 0.02;
+                }
+                const count = [thumbExt, indexExt, middleExt, ringExt, pinkyExt].filter(Boolean).length;
+                const openPalm = indexExt && middleExt && ringExt && pinkyExt && thumbExt;
+                return { count, openPalm };
             },
 
             configurePose: function(mode) {
@@ -1008,6 +1121,8 @@
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
                 this.barPath = [];
                 this.frameData = [];
+                this.gestureState.holdFrames = 0;
+                this.cancelGestureCountdown();
                 document.getElementById('valPhase').innerText = "Listo";
             },
             
@@ -1037,6 +1152,9 @@
                 this.lastFrameTime = timestamp || performance.now();
                 try {
                     await this.pose.send({image: this.video});
+                    if (this.hands && this.settings.gestureRecord && this.mode === 'AI' && this.isCameraActive && this.video.srcObject) {
+                        await this.hands.send({image: this.video});
+                    }
                 } catch (e) {
                     console.error(e);
                 }
@@ -1160,7 +1278,6 @@
                         else { el.style.opacity = '0'; }
                     }
                 }
-                this.detectGestureToggle(lm);
             },
 
             calculateAngle: function(a, b, c) {
@@ -1170,7 +1287,9 @@
                 return angle;
             },
 
-            toggleRecording: function() {
+            toggleRecording: function(opts) {
+                const skipConfirm = opts && opts.skipConfirm;
+                const doubleConfirm = opts && opts.doubleConfirm;
                 const btn = document.getElementById('recInnerAI');
                 if (!this.isRecording) {
                     this.isRecording = true; this.frameData = [];
@@ -1182,7 +1301,8 @@
                         this.startProcessing();
                         this.setMainPlayIcons(true);
                     }
-                    this.confirmFeedback('start');
+                    if (!skipConfirm) this.confirmFeedback('start');
+                    if (doubleConfirm) this.confirmDouble();
                 } else {
                     this.isRecording = false;
                     btn.classList.replace('rounded-sm', 'rounded-full'); btn.classList.remove('scale-50');
@@ -1193,9 +1313,19 @@
                         this.stopProcessing();
                         this.setMainPlayIcons(false);
                     }
-                    this.confirmFeedback('stop');
+                    if (!skipConfirm) this.confirmFeedback('stop');
                     setTimeout(() => this.analyzeLift(), 200);
                 }
+            },
+
+            configureHands: function() {
+                if (!this.hands) return;
+                this.hands.setOptions({
+                    maxNumHands: 1,
+                    modelComplexity: 0,
+                    minDetectionConfidence: 0.6,
+                    minTrackingConfidence: 0.6
+                });
             },
 
             analyzeLift: function() {
