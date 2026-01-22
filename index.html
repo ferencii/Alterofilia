@@ -110,7 +110,7 @@
     <div id="mainMenu" class="absolute inset-0 z-50 bg-slate-900 flex flex-col p-6 overflow-y-auto">
         <header class="mb-8 mt-4">
             <h1 class="text-3xl font-black italic tracking-tighter">HALTERO<span class="text-blue-500">AI</span></h1>
-            <p class="text-gray-400 text-sm">Versión Ferenciana Ultimate 5.5</p>
+            <p class="text-gray-400 text-sm">Versión Ferenciana Ultimate 5.6</p>
         </header>
         <div class="flex-grow grid gap-4 pb-8">
             <button ontouchstart="" onclick="app.setMode('AI')" class="menu-card bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6 rounded-2xl text-left shadow-lg relative overflow-hidden group">
@@ -843,7 +843,7 @@
                 const fingerCount = fingers.count;
                 const openPalm = fingers.openPalm;
                 const wrist = handLm[0];
-                const isRaised = wrist && wrist.y < 0.65;
+                const isRaised = wrist && wrist.y < 0.9;
                 if (!isRaised) {
                     this.gestureState.holdFrames = 0;
                     this.cancelGestureCountdown();
@@ -907,7 +907,8 @@
             },
 
             getFingerState: function(handLm, handedness) {
-                const thumbTip = handLm[4]; const thumbIp = handLm[3];
+                const wrist = handLm[0];
+                const thumbTip = handLm[4]; const thumbIp = handLm[3]; const thumbMcp = handLm[2];
                 const indexTip = handLm[8]; const indexPip = handLm[6];
                 const middleTip = handLm[12]; const middlePip = handLm[10];
                 const ringTip = handLm[16]; const ringPip = handLm[14];
@@ -917,10 +918,10 @@
                 const ringExt = ringTip.y < ringPip.y - 0.01;
                 const pinkyExt = pinkyTip.y < pinkyPip.y - 0.01;
                 let thumbExt = false;
-                if (thumbTip && thumbIp) {
-                    if (handedness === 'Right') thumbExt = thumbTip.x < thumbIp.x - 0.01;
-                    else if (handedness === 'Left') thumbExt = thumbTip.x > thumbIp.x + 0.01;
-                    else thumbExt = Math.abs(thumbTip.x - thumbIp.x) > 0.02;
+                if (thumbTip && thumbMcp && wrist) {
+                    const distTip = Math.hypot(thumbTip.x - wrist.x, thumbTip.y - wrist.y);
+                    const distMcp = Math.hypot(thumbMcp.x - wrist.x, thumbMcp.y - wrist.y);
+                    thumbExt = distTip > distMcp + 0.02;
                 }
                 const count = [thumbExt, indexExt, middleExt, ringExt, pinkyExt].filter(Boolean).length;
                 const openPalm = indexExt && middleExt && ringExt && pinkyExt && thumbExt;
@@ -1322,9 +1323,10 @@
                 if (!this.hands) return;
                 this.hands.setOptions({
                     maxNumHands: 1,
-                    modelComplexity: 0,
-                    minDetectionConfidence: 0.6,
-                    minTrackingConfidence: 0.6
+                    modelComplexity: 1,
+                    selfieMode: true,
+                    minDetectionConfidence: 0.5,
+                    minTrackingConfidence: 0.5
                 });
             },
 
