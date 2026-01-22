@@ -133,7 +133,7 @@
     <div id="workspaceHeader" class="glass h-14 flex items-center justify-between px-4 z-40 hide">
         <button onclick="app.goHome()" class="text-gray-300 hover:text-white"><i class="fa-solid fa-arrow-left"></i> Menú</button>
         <h2 id="workspaceTitle" class="font-bold text-sm tracking-wide uppercase text-blue-400">MODO</h2>
-        <div id="exerciseSelectorWrapper" class="hide max-w-[50%]">
+        <div id="exerciseSelectorWrapper" class="hide flex items-center gap-2 max-w-[60%]">
             <select id="exerciseSelect" class="bg-slate-800 text-xs rounded border border-slate-600 px-2 py-1 outline-none w-full truncate">
                 <optgroup label="SENTADILLAS">
                     <option value="BACK_SQUAT">Back Squat (Trasera)</option>
@@ -165,6 +165,9 @@
                     <option value="SNATCH_PULL">Snatch Pull (Tirón Arrancada)</option>
                 </optgroup>
             </select>
+            <button id="guideToggleBtn" ontouchstart="" onclick="app.toggleExerciseGuide()" class="glass px-2 py-1 rounded text-[10px] text-blue-300 border border-blue-500/30 hover:text-white active:text-blue-200 hide">
+                <i class="fa-solid fa-circle-question mr-1"></i>Guia
+            </button>
         </div>
     </div>
 
@@ -222,6 +225,18 @@
                 <div class="glass rounded-lg p-2 text-center"><div class="text-[10px] text-gray-400 uppercase">Rodilla</div><div class="font-mono font-bold text-xl text-blue-400" id="valKnee">--</div></div>
                 <div class="glass rounded-lg p-2 text-center"><div class="text-[10px] text-gray-400 uppercase">Cadera</div><div class="font-mono font-bold text-xl text-purple-400" id="valHip">--</div></div>
                 <div class="glass rounded-lg p-2 text-center border-l-2 border-green-500"><div class="text-[10px] text-gray-400 uppercase">Estado</div><div class="font-bold text-xs uppercase mt-1" id="valPhase">Listo</div></div>
+            </div>
+        </div>
+
+        <!-- AI Exercise Guide -->
+        <div id="exerciseGuide" class="absolute top-24 left-1/2 -translate-x-1/2 w-[92%] sm:w-[70%] max-w-xl z-30 hide">
+            <div class="glass rounded-xl p-4 border border-blue-500/20">
+                <div class="flex items-center justify-between gap-3 mb-2">
+                    <div class="text-xs uppercase tracking-widest text-blue-300 font-bold">Guia de grabacion</div>
+                    <div class="text-[10px] text-gray-400">Coach IA</div>
+                </div>
+                <div id="exerciseGuideTitle" class="font-bold text-sm text-white mb-2">Ejercicio</div>
+                <ul id="exerciseGuideList" class="text-xs text-gray-300 space-y-1 list-disc list-inside"></ul>
             </div>
         </div>
 
@@ -360,6 +375,168 @@
             zoomLevels: { top: 1, bot: 1 }, flipStates: { top: 1, bot: 1 }, panOffsets: { top: {x:0, y:0}, bot: {x:0, y:0} },
             dragState: { active: false, startX: 0, startY: 0, initialX: 0, initialY: 0, target: null },
             layoutMode: 'col',
+            exerciseGuides: {
+                DEFAULT: {
+                    title: 'Guia general',
+                    items: [
+                        'Perfil completo (90 grados) y cuerpo entero visible.',
+                        'Camara a la altura de la cadera, a 1-2 metros.',
+                        'Fondo limpio, buena luz frontal, movil estable.'
+                    ]
+                },
+                BACK_SQUAT: {
+                    title: 'Back Squat (Trasera)',
+                    items: [
+                        'Perfil completo y cuerpo entero en cuadro.',
+                        'Camara a la altura de la cadera.',
+                        'Busca profundidad: cadera por debajo de rodilla.'
+                    ]
+                },
+                FRONT_SQUAT: {
+                    title: 'Front Squat (Frontal)',
+                    items: [
+                        'Perfil completo y cuerpo entero en cuadro.',
+                        'Torso lo mas vertical posible durante la bajada.',
+                        'Profundidad completa sin perder postura.'
+                    ]
+                },
+                OH_SQUAT: {
+                    title: 'Overhead Squat',
+                    items: [
+                        'Perfil completo y brazos visibles en todo momento.',
+                        'Codos bloqueados arriba (brazos extendidos).',
+                        'Profundidad completa con estabilidad.'
+                    ]
+                },
+                SQUAT_CLEAN: {
+                    title: 'Squat Clean (Completo)',
+                    items: [
+                        'Perfil completo y cuerpo entero visible.',
+                        'Recibe profundo: cadera baja en la recepcion.',
+                        'Torso firme, sin colapsar pecho.'
+                    ]
+                },
+                POWER_CLEAN: {
+                    title: 'Power Clean',
+                    items: [
+                        'Perfil completo y cuerpo entero visible.',
+                        'Recepcion alta (no bajes demasiado).',
+                        'Torso firme y estable.'
+                    ]
+                },
+                MUSCLE_CLEAN: {
+                    title: 'Muscle Clean',
+                    items: [
+                        'Perfil completo y cuerpo entero visible.',
+                        'Sin flexion de piernas en la recepcion.',
+                        'Codos altos y control de espalda.'
+                    ]
+                },
+                HANG_SQUAT_CLEAN: {
+                    title: 'Hang Squat Clean',
+                    items: [
+                        'Perfil completo y cuerpo entero visible.',
+                        'Inicio desde hang, recibe profundo.',
+                        'Torso firme durante el tiron.'
+                    ]
+                },
+                HANG_POWER_CLEAN: {
+                    title: 'Hang Power Clean',
+                    items: [
+                        'Perfil completo y cuerpo entero visible.',
+                        'Recepcion alta desde hang.',
+                        'Torso firme y controlado.'
+                    ]
+                },
+                SQUAT_SNATCH: {
+                    title: 'Squat Snatch',
+                    items: [
+                        'Perfil completo y brazos visibles.',
+                        'Codos bloqueados arriba en la recepcion.',
+                        'Profundidad completa y estabilidad.'
+                    ]
+                },
+                POWER_SNATCH: {
+                    title: 'Power Snatch',
+                    items: [
+                        'Perfil completo y brazos visibles.',
+                        'Recepcion alta con codos bloqueados.',
+                        'Torso firme y controlado.'
+                    ]
+                },
+                MUSCLE_SNATCH: {
+                    title: 'Muscle Snatch',
+                    items: [
+                        'Perfil completo y brazos visibles.',
+                        'Sin flexion de piernas, todo con brazos.',
+                        'Codos bloqueados arriba.'
+                    ]
+                },
+                HANG_SNATCH: {
+                    title: 'Hang Snatch',
+                    items: [
+                        'Perfil completo y brazos visibles.',
+                        'Inicio desde hang, codos bloqueados.',
+                        'Control de torso durante el tiron.'
+                    ]
+                },
+                SPLIT_JERK: {
+                    title: 'Split Jerk',
+                    items: [
+                        'Perfil completo y brazos visibles.',
+                        'Bloqueo de codos en recepcion.',
+                        'Espalda recta en el empuje.'
+                    ]
+                },
+                PUSH_JERK: {
+                    title: 'Push Jerk',
+                    items: [
+                        'Perfil completo y brazos visibles.',
+                        'Recepcion mas compacta, codos bloqueados.',
+                        'Espalda recta en el empuje.'
+                    ]
+                },
+                PUSH_PRESS: {
+                    title: 'Push Press',
+                    items: [
+                        'Perfil completo y brazos visibles.',
+                        'Dip corto de piernas y empuje continuo.',
+                        'Codos bloqueados arriba.'
+                    ]
+                },
+                STRICT_PRESS: {
+                    title: 'Strict Press',
+                    items: [
+                        'Perfil completo y brazos visibles.',
+                        'Sin flexion de piernas.',
+                        'Codos bloqueados arriba.'
+                    ]
+                },
+                DEADLIFT: {
+                    title: 'Deadlift (Peso Muerto)',
+                    items: [
+                        'Perfil completo y cuerpo entero visible.',
+                        'Espalda recta durante todo el movimiento.',
+                        'Barra visible desde el suelo.'
+                    ]
+                },
+                CLEAN_PULL: {
+                    title: 'Clean Pull',
+                    items: [
+                        'Perfil completo y cuerpo entero visible.',
+                        'Espalda recta durante el tiron.',
+                        'Extension completa al final.'
+                    ]
+                },
+                SNATCH_PULL: {
+                    title: 'Snatch Pull',
+                    items: [
+                        'Perfil completo y cuerpo entero visible.',
+                        'Espalda recta durante el tiron.',
+                        'Extension completa al final.'
+                    ]
+                }
+            },
 
             video: document.getElementById('inputVideo'),
             canvas: document.getElementById('outputCanvas'),
@@ -377,6 +554,10 @@
                     this.setupPanEvents('wrapTop', 'top'); this.setupPanEvents('wrapBot', 'bot');
                     document.getElementById('vidTop').ontimeupdate = () => this.updateSeekUI('top');
                     document.getElementById('vidBot').ontimeupdate = () => this.updateSeekUI('bot');
+                    const exerciseSelect = document.getElementById('exerciseSelect');
+                    if (exerciseSelect) {
+                        exerciseSelect.addEventListener('change', () => this.updateExerciseGuide());
+                    }
                     this.video.onplay = () => this.startProcessing();
                     this.video.onpause = () => this.stopProcessing();
                     this.video.onended = () => {
@@ -424,10 +605,12 @@
                 document.getElementById('cameraWorkspace').classList.add('hide');
                 document.getElementById('compareWorkspace').classList.add('hide');
                 document.getElementById('exerciseSelectorWrapper').classList.add('hide');
+                document.getElementById('guideToggleBtn').classList.add('hide');
                 document.getElementById('hudAI').classList.add('hide');
                 document.getElementById('hudPath').classList.add('hide');
                 document.getElementById('hudPathBottom').classList.add('hide');
                 document.getElementById('bodyStatus').classList.add('hide');
+                document.getElementById('exerciseGuide').classList.add('hide');
                 document.getElementById('workspaceTitle').innerText = { 'AI': 'Coach IA', 'PATH': 'Trayectoria', 'COMPARE': 'Comparador' }[newMode];
 
                 if (newMode === 'AI' || newMode === 'PATH') {
@@ -446,6 +629,7 @@
                     
                     if (newMode === 'AI') {
                         document.getElementById('exerciseSelectorWrapper').classList.remove('hide');
+                        document.getElementById('guideToggleBtn').classList.remove('hide');
                         document.getElementById('camInstructions').innerText = "Coloca el móvil de perfil para medir ángulos.";
                     } else {
                         document.getElementById('camInstructions').innerText = "Graba de perfil. La línea verde seguirá tus muñecas.";
@@ -458,6 +642,40 @@
             goHome: function() { this.cleanupMedia(); location.reload(); },
 
             openHelp: function() { window.location.href = "ayuda.html"; },
+
+            updateExerciseGuide: function() {
+                if (this.mode !== 'AI') return;
+                const titleEl = document.getElementById('exerciseGuideTitle');
+                const listEl = document.getElementById('exerciseGuideList');
+                const selectEl = document.getElementById('exerciseSelect');
+                if (!titleEl || !listEl || !selectEl) return;
+                const guide = this.exerciseGuides[selectEl.value] || this.exerciseGuides.DEFAULT;
+                titleEl.innerText = guide.title;
+                listEl.innerHTML = '';
+                guide.items.forEach((item) => {
+                    const li = document.createElement('li');
+                    li.innerText = item;
+                    listEl.appendChild(li);
+                });
+            },
+
+            toggleExerciseGuide: function() {
+                if (this.mode !== 'AI') return;
+                const panel = document.getElementById('exerciseGuide');
+                const btn = document.getElementById('guideToggleBtn');
+                if (!panel || !btn) return;
+                const isHidden = panel.classList.contains('hide');
+                if (isHidden) {
+                    panel.classList.remove('hide');
+                    this.updateExerciseGuide();
+                    btn.classList.add('text-white');
+                    btn.classList.remove('text-blue-300');
+                } else {
+                    panel.classList.add('hide');
+                    btn.classList.remove('text-white');
+                    btn.classList.add('text-blue-300');
+                }
+            },
 
             configurePose: function(mode) {
                 const highPrecision = mode === 'AI' || mode === 'PATH';
