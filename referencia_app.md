@@ -10,10 +10,15 @@
 - Para cambios drasticos, subir +1.0 (ej. 5.6 -> 6.6).
 
 ## Changelog
-- 5.7
+- 5.7 (2026-01-23)
   - Ajustes de Coach IA: mejoras en alineacion de esqueleto con video.
   - Gestos configurables con confirmacion sonora/flash.
   - Boton para cambiar camara (frontal/trasera).
+
+Formato sugerido:
+- X.Y (YYYY-MM-DD)
+  - Cambio 1
+  - Cambio 2
 
 ## Mapa de codigo (index.html)
 
