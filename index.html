@@ -110,7 +110,7 @@
     <div id="mainMenu" class="absolute inset-0 z-50 bg-slate-900 flex flex-col p-6 overflow-y-auto">
         <header class="mb-8 mt-4">
             <h1 class="text-3xl font-black italic tracking-tighter">HALTERO<span class="text-blue-500">AI</span></h1>
-            <p class="text-gray-400 text-sm">Versión Ferenciana Ultimate 5.6</p>
+            <p class="text-gray-400 text-sm">Versión Ferenciana Ultimate 5.7</p>
         </header>
         <div class="flex-grow grid gap-4 pb-8">
             <button ontouchstart="" onclick="app.setMode('AI')" class="menu-card bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6 rounded-2xl text-left shadow-lg relative overflow-hidden group">
@@ -175,6 +175,9 @@
                 <i class="fa-solid fa-gear mr-1"></i>Ajustes
             </button>
         </div>
+        <button id="cameraToggleBtn" ontouchstart="" onclick="app.toggleCameraFacing(true)" class="glass px-2 py-1 rounded text-[10px] text-gray-300 border border-slate-500/30 hover:text-white active:text-gray-200 hide">
+            <i class="fa-solid fa-camera-rotate mr-1"></i><span id="cameraToggleLabel">Camara</span>
+        </button>
     </div>
 
     <!-- CAMERA WORKSPACE -->
@@ -410,6 +413,7 @@
             settings: { gestureRecord: false, soundConfirm: true, flashConfirm: false },
             gestureState: { holdFrames: 0, lastToggleTime: 0, countdown: { active: false, target: 0, startTime: 0, lastTick: -1 } },
             audioCtx: null,
+            cameraFacing: 'environment',
             exerciseGuides: {
                 DEFAULT: {
                     title: 'Guia general',
@@ -597,6 +601,7 @@
                         exerciseSelect.addEventListener('change', () => this.updateExerciseGuide());
                     }
                     this.syncSettingsUI();
+                    this.updateCameraToggleLabel();
                     this.video.onplay = () => this.startProcessing();
                     this.video.onpause = () => this.stopProcessing();
                     this.video.onended = () => {
@@ -646,6 +651,7 @@
                 document.getElementById('exerciseSelectorWrapper').classList.add('hide');
                 document.getElementById('guideToggleBtn').classList.add('hide');
                 document.getElementById('aiSettingsToggleBtn').classList.add('hide');
+                document.getElementById('cameraToggleBtn').classList.add('hide');
                 document.getElementById('hudAI').classList.add('hide');
                 document.getElementById('hudPath').classList.add('hide');
                 document.getElementById('hudPathBottom').classList.add('hide');
@@ -664,16 +670,17 @@
                     this.video.src = "";
                     this.video.load();
                     this.video.classList.remove('object-contain-video');
-                    this.video.classList.add('scale-x-[-1]');
-                    this.canvas.classList.add('scale-x-[-1]');
+                    this.applyCameraMirror();
                     this.setMainPlayIcons(false);
                     
                     if (newMode === 'AI') {
                         document.getElementById('exerciseSelectorWrapper').classList.remove('hide');
                         document.getElementById('guideToggleBtn').classList.remove('hide');
                         document.getElementById('aiSettingsToggleBtn').classList.remove('hide');
+                        document.getElementById('cameraToggleBtn').classList.remove('hide');
                         document.getElementById('camInstructions').innerText = "Coloca el móvil de perfil para medir ángulos.";
                     } else {
+                        document.getElementById('cameraToggleBtn').classList.remove('hide');
                         document.getElementById('camInstructions').innerText = "Graba de perfil. La línea verde seguirá tus muñecas.";
                     }
                 } else {
@@ -913,10 +920,10 @@
                 const middleTip = handLm[12]; const middlePip = handLm[10];
                 const ringTip = handLm[16]; const ringPip = handLm[14];
                 const pinkyTip = handLm[20]; const pinkyPip = handLm[18];
-                const indexExt = indexTip.y < indexPip.y - 0.01;
-                const middleExt = middleTip.y < middlePip.y - 0.01;
-                const ringExt = ringTip.y < ringPip.y - 0.01;
-                const pinkyExt = pinkyTip.y < pinkyPip.y - 0.01;
+                const indexExt = indexTip.y < indexPip.y - 0.005;
+                const middleExt = middleTip.y < middlePip.y - 0.005;
+                const ringExt = ringTip.y < ringPip.y - 0.005;
+                const pinkyExt = pinkyTip.y < pinkyPip.y - 0.005;
                 let thumbExt = false;
                 if (thumbTip && thumbMcp && wrist) {
                     const distTip = Math.hypot(thumbTip.x - wrist.x, thumbTip.y - wrist.y);
@@ -948,12 +955,41 @@
                 if (path) path.className = `fa-solid ${isPlaying ? 'fa-pause' : 'fa-play'}`;
             },
 
-            getCameraConstraints: function(useLow) {
+            updateCameraToggleLabel: function() {
+                const label = document.getElementById('cameraToggleLabel');
+                if (!label) return;
+                label.innerText = this.cameraFacing === 'user' ? 'Frontal' : 'Trasera';
+            },
+
+            applyCameraMirror: function() {
+                const isFront = this.cameraFacing === 'user';
+                this.updateCameraToggleLabel();
+                if (this.hands) {
+                    try { this.hands.setOptions({ selfieMode: isFront }); } catch (e) {}
+                }
+                if (!this.video || !this.video.srcObject) return;
+                if (isFront) {
+                    this.video.classList.add('scale-x-[-1]');
+                    this.canvas.classList.add('scale-x-[-1]');
+                } else {
+                    this.video.classList.remove('scale-x-[-1]');
+                    this.canvas.classList.remove('scale-x-[-1]');
+                }
+            },
+
+            toggleCameraFacing: function(restart) {
+                this.cameraFacing = this.cameraFacing === 'user' ? 'environment' : 'user';
+                this.applyCameraMirror();
+                if (restart && this.isCameraActive) this.startCamera();
+            },
+
+            getCameraConstraints: function(useLow, forceExact) {
                 const width = useLow ? 640 : (isMobile ? 720 : 1280);
                 const height = useLow ? 480 : (isMobile ? 480 : 720);
+                const facing = forceExact ? { exact: this.cameraFacing } : { ideal: this.cameraFacing };
                 return {
                     video: {
-                        facingMode: { ideal: 'environment' },
+                        facingMode: facing,
                         width: { ideal: width },
                         height: { ideal: height }
                     },
@@ -1043,8 +1079,17 @@
                 try {
                     this.stopCamera();
                     this.revokeMainObjectUrl();
-                    const stream = await navigator.mediaDevices.getUserMedia(this.getCameraConstraints(false))
-                        .catch(() => navigator.mediaDevices.getUserMedia(this.getCameraConstraints(true)));
+                    let stream = null;
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia(this.getCameraConstraints(false, true));
+                    } catch (e1) {
+                        try {
+                            stream = await navigator.mediaDevices.getUserMedia(this.getCameraConstraints(true, true));
+                        } catch (e2) {
+                            stream = await navigator.mediaDevices.getUserMedia(this.getCameraConstraints(false, false))
+                                .catch(() => navigator.mediaDevices.getUserMedia(this.getCameraConstraints(true, false)));
+                        }
+                    }
                     this.stream = stream;
                     this.video.srcObject = stream; 
                     this.video.play(); 
@@ -1052,8 +1097,7 @@
                     
                     // Fix styling for camera
                     this.video.classList.remove('object-contain-video');
-                    this.video.classList.add('scale-x-[-1]');
-                    this.canvas.classList.add('scale-x-[-1]');
+                    this.applyCameraMirror();
                     
                     document.getElementById('camStartOverlay').classList.add('hide');
                     if (this.mode === 'AI') document.getElementById('hudAI').classList.remove('hide');
@@ -1113,8 +1157,7 @@
                 this.video.srcObject = null;
                 this.video.load();
                 this.video.classList.remove('object-contain-video');
-                this.video.classList.add('scale-x-[-1]');
-                this.canvas.classList.add('scale-x-[-1]');
+                this.applyCameraMirror();
                 this.setMainPlayIcons(false);
                 document.getElementById('camStartOverlay').classList.remove('hide');
                 document.getElementById('aiVideoControls').classList.add('hide');
@@ -1324,7 +1367,7 @@
                 this.hands.setOptions({
                     maxNumHands: 1,
                     modelComplexity: 1,
-                    selfieMode: true,
+                    selfieMode: this.cameraFacing === 'user',
                     minDetectionConfidence: 0.5,
                     minTrackingConfidence: 0.5
                 });

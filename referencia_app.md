@@ -4,6 +4,17 @@
 - `index.html`: app principal (Coach IA, Trayectoria y Comparador). Incluye UI, logica de camara y analisis.
 - `ayuda.html`: guia de grabacion con tabla de contenidos y acceso de vuelta a `index.html`.
 
+## Versionado
+- La version vive en `index.html` (linea del menu principal).
+- Por cada cambio menor, subir +0.1 (ej. 5.6 -> 5.7).
+- Para cambios drasticos, subir +1.0 (ej. 5.6 -> 6.6).
+
+## Changelog
+- 5.7
+  - Ajustes de Coach IA: mejoras en alineacion de esqueleto con video.
+  - Gestos configurables con confirmacion sonora/flash.
+  - Boton para cambiar camara (frontal/trasera).
+
 ## Mapa de codigo (index.html)
 
 ### Head y dependencias
