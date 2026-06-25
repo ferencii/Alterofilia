@@ -476,7 +476,7 @@
             dragState: { active: false, startX: 0, startY: 0, initialX: 0, initialY: 0, target: null },
             layoutMode: 'col',
             settings: { gestureRecord: false, soundConfirm: true, flashConfirm: false, autoSaveVideo: true },
-            gestureState: { holdFrames: 0, lastToggleTime: 0, countdown: { active: false, target: 0, startTime: 0, lastTick: -1 } },
+            gestureState: { holdFrames: 0, openPalmStartTime: 0, lastToggleTime: 0, countdown: { active: false, target: 0, startTime: 0, lastTick: -1 } },
             audioCtx: null,
             cameraFacing: 'environment',
             exerciseGuides: {
@@ -1141,14 +1141,17 @@
                 }
                 if (openPalm) {
                     this.cancelGestureCountdown();
-                    this.gestureState.holdFrames += 1;
-                    if (this.gestureState.holdFrames >= 6 && (now - this.gestureState.lastToggleTime) > 1200) {
-                        this.gestureState.holdFrames = 0;
+                    if (!this.gestureState.openPalmStartTime) {
+                        this.gestureState.openPalmStartTime = now;
+                    }
+                    if ((now - this.gestureState.openPalmStartTime) >= 1500 && (now - this.gestureState.lastToggleTime) > 1200) {
+                        this.gestureState.openPalmStartTime = 0;
                         this.gestureState.lastToggleTime = now;
-                        this.toggleRecording();
+                        this.toggleRecording({ doubleConfirm: true });
                     }
                     return;
                 }
+                this.gestureState.openPalmStartTime = 0;
                 this.gestureState.holdFrames = 0;
                 if (this.isRecording) {
                     this.cancelGestureCountdown();
