@@ -1073,42 +1073,12 @@
                 if (!handLm) {
                     this.gestureState.holdFrames = 0;
                     this.cancelGestureCountdown();
+                    this.lastHandLm = null;
                     return;
                 }
-
-                // Dibujar la mano solo si estamos esperando (no grabando) o si queremos mostrarla siempre
-                if (map && window.drawConnectors && window.drawLandmarks) {
-                    this.ctx.save();
-                    this.ctx.translate(map.offsetX, map.offsetY);
-                    this.ctx.scale(map.scale, map.scale);
-                    window.drawConnectors(this.ctx, handLm, HAND_CONNECTIONS, {color: '#facc15', lineWidth: 3});
-                    window.drawLandmarks(this.ctx, handLm, {color: '#000000', lineWidth: 1, radius: 3});
-                    this.ctx.restore();
-                }
-
-                const handedness = results && results.multiHandedness && results.multiHandedness[0]
-                    ? results.multiHandedness[0].label
-                    : null;
-                
-                if (map) {
-                    const fingers = this.getFingerState(handLm, handedness);
-                    let text = "";
-                    if (fingers.openPalm) text = this.isRecording ? "PARADA DIRECTA" : "GRABACIÓN DIRECTA";
-                    else if (fingers.count > 0) text = this.isRecording ? `PARANDO EN ${fingers.count}s` : `GRABANDO EN ${fingers.count}s`;
-                    
-                    if (text) {
-                        this.ctx.save();
-                        this.ctx.font = "bold 24px 'Bitter', serif";
-                        this.ctx.fillStyle = this.isRecording ? "#ef4444" : "#facc15"; 
-                        this.ctx.textAlign = "center";
-                        this.ctx.shadowColor = "black";
-                        this.ctx.shadowBlur = 4;
-                        const wristX = map.offsetX + handLm[0].x * map.scaledW;
-                        const wristY = map.offsetY + handLm[0].y * map.scaledH - 80;
-                        this.ctx.fillText(text, wristX, wristY);
-                        this.ctx.restore();
-                    }
-                }
+                this.lastHandLm = handLm;
+                this.lastHandedness = handedness;
+                this.lastMap = map;
                 
                 this.detectGestureToggle(handLm, handedness);
             },
@@ -1488,6 +1458,56 @@
                 if (this.video.duration) this.video.currentTime = (val / 100) * this.video.duration;
             },
 
+            renderHands: function() {
+                if (!this.settings.gestureRecord || this.mode !== 'AI') return;
+                const handLm = this.lastHandLm;
+                const handedness = this.lastHandedness;
+                const map = this.lastMap;
+                
+                if (!handLm || !map) return;
+
+                // Draw hand landmarks
+                if (window.drawConnectors && window.drawLandmarks) {
+                    this.ctx.save();
+                    this.ctx.translate(map.offsetX, map.offsetY);
+                    this.ctx.scale(map.scale, map.scale);
+                    window.drawConnectors(this.ctx, handLm, HAND_CONNECTIONS, {color: '#facc15', lineWidth: 3});
+                    window.drawLandmarks(this.ctx, handLm, {color: '#000000', lineWidth: 1, radius: 3});
+                    this.ctx.restore();
+                }
+                
+                // Draw floating text
+                const fingers = this.getFingerState(handLm, handedness);
+                let text = "";
+                if (fingers.openPalm) text = this.isRecording ? "PARADA DIRECTA" : "GRABACIÓN DIRECTA";
+                else if (fingers.count > 0) text = this.isRecording ? `PARANDO EN ${fingers.count}s` : `GRABANDO EN ${fingers.count}s`;
+                
+                if (text) {
+                    this.ctx.save();
+                    const wristX = map.offsetX + handLm[0].x * map.scaledW;
+                    const wristY = map.offsetY + handLm[0].y * map.scaledH - 120; // Más alto para que no lo tape la mano
+                    
+                    this.ctx.font = "900 32px 'Roboto', sans-serif";
+                    this.ctx.textAlign = "center";
+                    
+                    // Fondo negro semitransparente para súper legibilidad
+                    const metrics = this.ctx.measureText(text);
+                    const padding = 12;
+                    this.ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+                    this.ctx.beginPath();
+                    this.ctx.roundRect(wristX - metrics.width/2 - padding, wristY - 32 - padding, metrics.width + padding*2, 32 + padding*2, 8);
+                    this.ctx.fill();
+                    
+                    // Texto
+                    this.ctx.fillStyle = this.isRecording ? "#ef4444" : "#facc15"; 
+                    this.ctx.shadowColor = "rgba(0,0,0,0.8)";
+                    this.ctx.shadowBlur = 8;
+                    this.ctx.fillText(text, wristX, wristY);
+                    
+                    this.ctx.restore();
+                }
+            },
+
             processFrame: async function(timestamp) {
                 if (!this.isProcessing) return;
                 if (this.video.paused || this.video.ended || !this.isAppVisible) { this.stopProcessing(); return; }
@@ -1530,7 +1550,10 @@
 
                 // Removed Gesture Detection via Pose
 
-                if (this.mode === 'AI') this.renderAI(results.poseLandmarks);
+                if (this.mode === 'AI') {
+                    this.renderAI(results.poseLandmarks);
+                    this.renderHands();
+                }
                 else if (this.mode === 'PATH') this.renderPath(results.poseLandmarks);
                 this.currentMap = null;
             },
