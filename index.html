@@ -120,7 +120,7 @@
     <!-- MENU -->
     <div id="mainMenu" class="absolute inset-0 z-50 bg-neutral-900 flex flex-col p-6 overflow-y-auto">
         <header class="mb-8 mt-4">
-            <h1 class="text-3xl font-black italic tracking-tighter flex items-center">HALTERO<span class="text-yellow-400">AI</span> <span class="text-xs bg-yellow-500 font-bold text-black px-2 py-1 rounded-md ml-3 tracking-normal not-italic shadow">V7.9.1</span></h1>
+            <h1 class="text-3xl font-black italic tracking-tighter flex items-center">HALTERO<span class="text-yellow-400">AI</span> <span class="text-xs bg-yellow-500 font-bold text-black px-2 py-1 rounded-md ml-3 tracking-normal not-italic shadow">V7.9.2</span></h1>
             <p class="text-gray-400 text-sm mt-1">Edición PWA Offline</p>
         </header>
         <div class="flex-grow grid gap-4 pb-8">
@@ -216,7 +216,7 @@
     <!-- CAMERA WORKSPACE -->
     <div id="cameraWorkspace" class="flex-grow relative hide bg-black">
         <video id="inputVideo" playsinline muted class="cam transform scale-x-[-1]"></video>
-        <canvas id="outputCanvas" class="cam transform scale-x-[-1]"></canvas>
+        <canvas id="outputCanvas" class="cam transform scale-x-[-1] z-10 pointer-events-none"></canvas>
 
         <!-- Status Overlays -->
         <div id="bodyStatus" class="absolute top-20 left-0 w-full text-center z-20 pointer-events-none">
@@ -1191,22 +1191,39 @@
             },
 
             getFingerState: function(handLm, handedness) {
+                if (!handLm || handLm.length < 21) return { count: 0, openPalm: false };
+                
+                // Correct for aspect ratio distortion in distance calculations
+                const map = this.lastMap || this.getCoverMapping();
+                const aspect = map ? (map.scaledW / map.scaledH) : 0.75;
+                const getDist = (p1, p2) => Math.hypot((p1.x - p2.x) * aspect, p1.y - p2.y);
+                
                 const wrist = handLm[0];
+                const middleMcp = handLm[9];
+                
+                // Calculate hand scale (palm length) in uniform coordinates
+                const handScale = getDist(middleMcp, wrist);
+                if (handScale < 0.001) return { count: 0, openPalm: false };
+                
+                // Define threshold relative to hand scale (e.g. 12% of palm length)
+                const thresh = handScale * 0.12;
+                
                 const thumbTip = handLm[4]; const thumbMcp = handLm[2];
                 const indexTip = handLm[8]; const indexPip = handLm[6];
                 const middleTip = handLm[12]; const middlePip = handLm[10];
                 const ringTip = handLm[16]; const ringPip = handLm[14];
                 const pinkyTip = handLm[20]; const pinkyPip = handLm[18];
-                const indexExt = wrist && Math.hypot(indexTip.x - wrist.x, indexTip.y - wrist.y) > Math.hypot(indexPip.x - wrist.x, indexPip.y - wrist.y) + 0.02;
-                const middleExt = wrist && Math.hypot(middleTip.x - wrist.x, middleTip.y - wrist.y) > Math.hypot(middlePip.x - wrist.x, middlePip.y - wrist.y) + 0.02;
-                const ringExt = wrist && Math.hypot(ringTip.x - wrist.x, ringTip.y - wrist.y) > Math.hypot(ringPip.x - wrist.x, ringPip.y - wrist.y) + 0.02;
-                const pinkyExt = wrist && Math.hypot(pinkyTip.x - wrist.x, pinkyTip.y - wrist.y) > Math.hypot(pinkyPip.x - wrist.x, pinkyPip.y - wrist.y) + 0.02;
+                
+                const indexExt = getDist(indexTip, wrist) > getDist(indexPip, wrist) + thresh;
+                const middleExt = getDist(middleTip, wrist) > getDist(middlePip, wrist) + thresh;
+                const ringExt = getDist(ringTip, wrist) > getDist(ringPip, wrist) + thresh;
+                const pinkyExt = getDist(pinkyTip, wrist) > getDist(pinkyPip, wrist) + thresh;
+                
                 let thumbExt = false;
-                if (thumbTip && thumbMcp && wrist) {
-                    const distTip = Math.hypot(thumbTip.x - wrist.x, thumbTip.y - wrist.y);
-                    const distMcp = Math.hypot(thumbMcp.x - wrist.x, thumbMcp.y - wrist.y);
-                    thumbExt = distTip > distMcp + 0.02;
+                if (thumbTip && thumbMcp) {
+                    thumbExt = getDist(thumbTip, wrist) > getDist(thumbMcp, wrist) + thresh;
                 }
+                
                 // count only index/middle/ring/pinky — thumb excluded from countdown
                 // This way: fist=0, 1 finger=1s, 2=2s, 3=3s, 4=4s, open palm (all 5) = direct
                 const count = [indexExt, middleExt, ringExt, pinkyExt].filter(Boolean).length;
