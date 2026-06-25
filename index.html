@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -138,6 +138,9 @@
             <button ontouchstart="" onclick="app.openHistory()" class="menu-card bg-gradient-to-br from-neutral-800 to-neutral-900 border border-neutral-700 p-6 rounded-2xl text-left shadow-lg relative overflow-hidden group">
                 <div class="absolute right-0 top-0 p-4 opacity-20 group-active:opacity-40 transition"><i class="fa-solid fa-clock-rotate-left text-6xl text-orange-400"></i></div>
                 <div class="relative z-10"><h2 class="text-xl font-bold text-white">Historial</h2><p class="text-sm text-gray-400 mt-1">Revisa tus últimos levantamientos.</p></div>
+            </button>
+            <button id="btnInstallApp" ontouchstart="" onclick="app.installPWA()" class="menu-card bg-gradient-to-r from-yellow-500 to-yellow-600 border border-yellow-400 p-4 rounded-2xl text-center shadow-lg shadow-yellow-500/20 active:scale-95 transition hidden">
+                <div class="relative z-10 flex items-center justify-center gap-2"><i class="fa-solid fa-download text-black text-xl"></i><h2 class="text-lg font-bold text-black">Instalar Aplicación</h2></div>
             </button>
         </div>
     </div>
@@ -1884,8 +1887,41 @@
             seekCompare: function(seconds) {
                 const v1 = document.getElementById('vidTop'); const v2 = document.getElementById('vidBot');
                 v1.currentTime += seconds; v2.currentTime += seconds;
+            },
+
+            installPWA: function() {
+                if (window.deferredPrompt) {
+                    window.deferredPrompt.prompt();
+                    window.deferredPrompt.userChoice.then((choiceResult) => {
+                        if (choiceResult.outcome === 'accepted') {
+                            document.getElementById('btnInstallApp').classList.add('hidden');
+                        }
+                        window.deferredPrompt = null;
+                    });
+                } else {
+                    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                    if (isIOS) {
+                        alert('Para instalar en iOS:\n1. Toca el botón "Compartir" (el cuadrado con la flecha) abajo en Safari.\n2. Selecciona "Añadir a la pantalla de inicio".');
+                    } else {
+                        alert('La aplicación ya está instalada o tu navegador no permite instalación directa (ej. navegadores integrados como WhatsApp o Instagram). Ábrela desde Chrome puro.');
+                    }
+                }
             }
         };
+
+        window.deferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            window.deferredPrompt = e;
+            document.getElementById('btnInstallApp').classList.remove('hidden');
+        });
+
+        // Mostrar para iOS si no está en modo standalone
+        if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
+            if (!window.matchMedia('(display-mode: standalone)').matches && !window.navigator.standalone) {
+                document.getElementById('btnInstallApp').classList.remove('hidden');
+            }
+        }
 
         app.init();
 

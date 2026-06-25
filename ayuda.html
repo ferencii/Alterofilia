@@ -1,35 +1,36 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="true">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#0f172a">
+    <meta name="theme-color" content="#000000">
     <meta name="color-scheme" content="dark">
     <title>Guía de Grabación - HalteroAI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700;800&family=Bitter:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900;1,800;1,900&display=swap" rel="stylesheet">
     <style>
         :root { --safe-top: env(safe-area-inset-top); --safe-right: env(safe-area-inset-right); --safe-bottom: env(safe-area-inset-bottom); --safe-left: env(safe-area-inset-left); }
         * { -webkit-tap-highlight-color: transparent; }
         html, body { width: 100%; height: 100%; }
-        body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #f3f4f6; font-family: 'Roboto', sans-serif; min-height: 100dvh; }
-        .section-header { background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%); padding: 2rem; border-radius: 1rem; margin-bottom: 2rem; box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2); }
+        body { background: linear-gradient(135deg, #000000 0%, #171717 100%); color: #f3f4f6; font-family: 'Open Sans', sans-serif; min-height: 100dvh; }
+        h1, h2, h3, h4, .font-black, .font-bold { font-family: 'Bitter', serif; }
+        .section-header { background: linear-gradient(135deg, #facc15 0%, #ca8a04 100%); padding: 2rem; border-radius: 1rem; margin-bottom: 2rem; box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2); }
         .exercise-card { background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 1rem; padding: 1.5rem; margin-bottom: 1.5rem; transition: all 0.3s; }
         .exercise-card:hover { border-color: rgba(59, 130, 246, 0.5); box-shadow: 0 10px 30px rgba(59, 130, 246, 0.1); }
-        .instruction-step { background: rgba(15, 23, 42, 0.6); border-left: 4px solid #3b82f6; padding: 1rem; margin: 1rem 0; border-radius: 0.5rem; }
+        .instruction-step { background: rgba(15, 23, 42, 0.6); border-left: 4px solid #facc15; padding: 1rem; margin: 1rem 0; border-radius: 0.5rem; }
         .correct { border-left-color: #10b981; }
         .incorrect { border-left-color: #ef4444; }
         .warning { border-left-color: #f59e0b; }
         .icon-check { color: #10b981; font-size: 1.5rem; }
         .icon-wrong { color: #ef4444; font-size: 1.5rem; }
         .icon-warning { color: #f59e0b; font-size: 1.5rem; }
-        .step-number { display: inline-block; background: #3b82f6; color: white; width: 2rem; height: 2rem; border-radius: 50%; text-align: center; line-height: 2rem; font-weight: bold; margin-right: 0.5rem; }
-        .toc-button { background: #3b82f6; color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; margin: 0.5rem; display: inline-block; text-decoration: none; transition: all 0.3s; }
-        .toc-button:hover { background: #1e40af; transform: translateY(-2px); }
-        .back-button { position: fixed; bottom: calc(2rem + var(--safe-bottom)); right: calc(2rem + var(--safe-right)); background: #3b82f6; color: white; width: 3rem; height: 3rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.5rem; z-index: 50; box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3); }
+        .step-number { display: inline-block; background: #facc15; color: white; width: 2rem; height: 2rem; border-radius: 50%; text-align: center; line-height: 2rem; font-weight: bold; margin-right: 0.5rem; }
+        .toc-button { background: #facc15; color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; margin: 0.5rem; display: inline-block; text-decoration: none; transition: all 0.3s; }
+        .toc-button:hover { background: #ca8a04; transform: translateY(-2px); }
+        .back-button { position: fixed; bottom: calc(2rem + var(--safe-bottom)); right: calc(2rem + var(--safe-right)); background: #facc15; color: white; width: 3rem; height: 3rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.5rem; z-index: 50; box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3); }
     </style>
 </head>
 <body class="p-4 sm:p-6">
@@ -39,13 +40,13 @@
             <h1 class="text-4xl font-black italic tracking-tighter mb-2">
                 HALTERO<span class="text-white">AI</span>
             </h1>
-            <p class="text-xl text-blue-100">Guía Completa de Grabación y Posicionamiento</p>
-            <p class="text-sm text-blue-200 mt-2">Para obtener los mejores análisis de tu técnica</p>
+            <p class="text-xl text-yellow-100">Guía Completa de Grabación y Posicionamiento</p>
+            <p class="text-sm text-yellow-200 mt-2">Para obtener los mejores análisis de tu técnica</p>
         </div>
 
         <!-- Tabla de contenidos -->
-        <div class="bg-slate-800 p-6 rounded-lg mb-8">
-            <h2 class="text-2xl font-bold mb-4 flex items-center"><i class="fa-solid fa-book mr-3 text-blue-400"></i>Tabla de Contenidos</h2>
+        <div class="bg-neutral-800 p-6 rounded-lg mb-8">
+            <h2 class="text-2xl font-bold mb-4 flex items-center"><i class="fa-solid fa-book mr-3 text-yellow-400"></i>Tabla de Contenidos</h2>
             <div class="grid sm:grid-cols-2 gap-3">
                 <a href="#general" class="toc-button"><i class="fa-solid fa-play mr-2"></i>Guía General</a>
                 <a href="#sentadillas" class="toc-button"><i class="fa-solid fa-person mr-2"></i>Sentadillas</a>
@@ -63,7 +64,7 @@
             </div>
 
             <div class="exercise-card">
-                <h3 class="text-2xl font-bold mb-4 text-blue-300"><i class="fa-solid fa-mobile mr-2"></i>Posicionamiento del Móvil</h3>
+                <h3 class="text-2xl font-bold mb-4 text-yellow-300"><i class="fa-solid fa-mobile mr-2"></i>Posicionamiento del Móvil</h3>
                 
                 <div class="instruction-step correct">
                     <div class="flex items-start">
@@ -119,7 +120,7 @@
             </div>
 
             <div class="exercise-card">
-                <h3 class="text-2xl font-bold mb-4 text-blue-300"><i class="fa-solid fa-person mr-2"></i>Posicionamiento del Atleta</h3>
+                <h3 class="text-2xl font-bold mb-4 text-yellow-300"><i class="fa-solid fa-person mr-2"></i>Posicionamiento del Atleta</h3>
                 
                 <div class="instruction-step correct">
                     <div class="flex items-start">
@@ -140,19 +141,19 @@
             </div>
 
             <div class="exercise-card">
-                <h3 class="text-2xl font-bold mb-4 text-blue-300"><i class="fa-solid fa-video mr-2"></i>Requisitos de Grabación</h3>
+                <h3 class="text-2xl font-bold mb-4 text-yellow-300"><i class="fa-solid fa-video mr-2"></i>Requisitos de Grabación</h3>
                 
                 <div class="space-y-3">
-                    <div class="bg-slate-700 p-3 rounded">
+                    <div class="bg-neutral-700 p-3 rounded">
                         <p class="text-sm"><strong>Duración mínima:</strong> Al menos 3-5 segundos de movimiento completo (es muy rápido)</p>
                     </div>
-                    <div class="bg-slate-700 p-3 rounded">
+                    <div class="bg-neutral-700 p-3 rounded">
                         <p class="text-sm"><strong>Movimiento completo:</strong> Debe verse el ejercicio de inicio a final</p>
                     </div>
-                    <div class="bg-slate-700 p-3 rounded">
+                    <div class="bg-neutral-700 p-3 rounded">
                         <p class="text-sm"><strong>Claridad:</strong> Video sin movimientos de cámara bruscos</p>
                     </div>
-                    <div class="bg-slate-700 p-3 rounded">
+                    <div class="bg-neutral-700 p-3 rounded">
                         <p class="text-sm"><strong>Formato:</strong> Cualquier formato de video (MP4, MOV, etc.)</p>
                     </div>
                 </div>
@@ -166,7 +167,7 @@
             </div>
 
             <div class="exercise-card">
-                <h3 class="text-2xl font-bold mb-4 text-blue-300">Back Squat (Sentadilla Trasera)</h3>
+                <h3 class="text-2xl font-bold mb-4 text-yellow-300">Back Squat (Sentadilla Trasera)</h3>
                 <p class="text-sm text-gray-300 mb-4">La más común. Con la barra sobre los hombros, carga trasera.</p>
                 
                 <div class="space-y-3">
@@ -221,13 +222,13 @@
                     </div>
                 </div>
 
-                <div class="mt-4 p-3 bg-blue-900 rounded text-sm">
+                <div class="mt-4 p-3 bg-yellow-900 rounded text-sm">
                     <p><strong>💡 Consejo:</strong> Intenta bajar todo lo que puedas. El análisis valida que llegues a profundidad paralela o más.</p>
                 </div>
             </div>
 
             <div class="exercise-card">
-                <h3 class="text-2xl font-bold mb-4 text-blue-300">Front Squat (Sentadilla Frontal)</h3>
+                <h3 class="text-2xl font-bold mb-4 text-yellow-300">Front Squat (Sentadilla Frontal)</h3>
                 <p class="text-sm text-gray-300 mb-4">Barra en la parte frontal de los hombros, posición frontal.</p>
                 
                 <div class="space-y-3">
@@ -272,13 +273,13 @@
                     </div>
                 </div>
 
-                <div class="mt-4 p-3 bg-blue-900 rounded text-sm">
+                <div class="mt-4 p-3 bg-yellow-900 rounded text-sm">
                     <p><strong>💡 Consejo:</strong> Front squat requiere más postura. Mantén el torso perpendicular al suelo mientras bajas.</p>
                 </div>
             </div>
 
             <div class="exercise-card">
-                <h3 class="text-2xl font-bold mb-4 text-blue-300">Overhead Squat</h3>
+                <h3 class="text-2xl font-bold mb-4 text-yellow-300">Overhead Squat</h3>
                 <p class="text-sm text-gray-300 mb-4">Sentadilla con la barra completamente arriba, brazos extendidos.</p>
                 
                 <div class="space-y-3">
@@ -323,7 +324,7 @@
                     </div>
                 </div>
 
-                <div class="mt-4 p-3 bg-blue-900 rounded text-sm">
+                <div class="mt-4 p-3 bg-yellow-900 rounded text-sm">
                     <p><strong>💡 Consejo:</strong> El bloqueo de codos es lo más importante en overhead squat. Mantén los brazos rectos todo el tiempo.</p>
                 </div>
             </div>
@@ -336,7 +337,7 @@
             </div>
 
             <div class="exercise-card">
-                <h3 class="text-2xl font-bold mb-4 text-blue-300">Squat Clean (Cargada Completa)</h3>
+                <h3 class="text-2xl font-bold mb-4 text-yellow-300">Squat Clean (Cargada Completa)</h3>
                 <p class="text-sm text-gray-300 mb-4">Levanta la barra del suelo en un movimiento explosivo hasta recepción en sentadilla profunda.</p>
                 
                 <div class="space-y-3">
@@ -384,13 +385,13 @@
                     </div>
                 </div>
 
-                <div class="mt-4 p-3 bg-blue-900 rounded text-sm">
+                <div class="mt-4 p-3 bg-yellow-900 rounded text-sm">
                     <p><strong>💡 Consejo:</strong> Lo más importante es mantener la espalda recta en el tirón inicial. No dejes que el pecho colapse.</p>
                 </div>
             </div>
 
             <div class="exercise-card">
-                <h3 class="text-2xl font-bold mb-4 text-blue-300">Power Clean (Cargada de Potencia)</h3>
+                <h3 class="text-2xl font-bold mb-4 text-yellow-300">Power Clean (Cargada de Potencia)</h3>
                 <p class="text-sm text-gray-300 mb-4">Mismo movimiento que Squat Clean pero recibes la barra más alta (rodillas menos flexionadas).</p>
                 
                 <div class="space-y-3">
@@ -435,13 +436,13 @@
                     </div>
                 </div>
 
-                <div class="mt-4 p-3 bg-blue-900 rounded text-sm">
+                <div class="mt-4 p-3 bg-yellow-900 rounded text-sm">
                     <p><strong>💡 Consejo:</strong> En Power, la recepción es más rápida y con menos profundidad. Es importante que NO bajes tanto como en Squat Clean.</p>
                 </div>
             </div>
 
             <div class="exercise-card">
-                <h3 class="text-2xl font-bold mb-4 text-blue-300">Muscle Clean (Cargada Estricta)</h3>
+                <h3 class="text-2xl font-bold mb-4 text-yellow-300">Muscle Clean (Cargada Estricta)</h3>
                 <p class="text-sm text-gray-300 mb-4">Movimiento sin flexión de piernas. Levanta la barra usando fuerza de brazos principalmente.</p>
                 
                 <div class="space-y-3">
@@ -486,13 +487,13 @@
                     </div>
                 </div>
 
-                <div class="mt-4 p-3 bg-blue-900 rounded text-sm">
+                <div class="mt-4 p-3 bg-yellow-900 rounded text-sm">
                     <p><strong>💡 Consejo:</strong> Muscle Clean es difícil. La clave es que los brazos y espalda hagan la mayoría del trabajo, NO tus piernas.</p>
                 </div>
             </div>
 
             <div class="exercise-card">
-                <h3 class="text-2xl font-bold mb-4 text-blue-300">Hang Squat Clean / Hang Power Clean</h3>
+                <h3 class="text-2xl font-bold mb-4 text-yellow-300">Hang Squat Clean / Hang Power Clean</h3>
                 <p class="text-sm text-gray-300 mb-4">Igual que sus versiones sin "Hang", pero la barra comienza en tus manos a altura de cadera, no en el suelo.</p>
                 
                 <div class="space-y-3">
@@ -537,7 +538,7 @@
                     </div>
                 </div>
 
-                <div class="mt-4 p-3 bg-blue-900 rounded text-sm">
+                <div class="mt-4 p-3 bg-yellow-900 rounded text-sm">
                     <p><strong>💡 Consejo:</strong> Hang Clean es más técnico. La clave es mantener la barra cerca del cuerpo en el tirón.</p>
                 </div>
             </div>
@@ -550,7 +551,7 @@
             </div>
 
             <div class="exercise-card">
-                <h3 class="text-2xl font-bold mb-4 text-blue-300">Squat Snatch (Arrancada Completa)</h3>
+                <h3 class="text-2xl font-bold mb-4 text-yellow-300">Squat Snatch (Arrancada Completa)</h3>
                 <p class="text-sm text-gray-300 mb-4">Levanta la barra del suelo directamente arriba recibiendo en sentadilla profunda con brazos extendidos.</p>
                 
                 <div class="space-y-3">
@@ -605,13 +606,13 @@
                     </div>
                 </div>
 
-                <div class="mt-4 p-3 bg-blue-900 rounded text-sm">
+                <div class="mt-4 p-3 bg-yellow-900 rounded text-sm">
                     <p><strong>💡 Consejo:</strong> Snatch es muy rápido y explosivo. Asegúrate que la cámara capture bien el movimiento sin movimientos bruscos.</p>
                 </div>
             </div>
 
             <div class="exercise-card">
-                <h3 class="text-2xl font-bold mb-4 text-blue-300">Power Snatch (Arrancada de Potencia)</h3>
+                <h3 class="text-2xl font-bold mb-4 text-yellow-300">Power Snatch (Arrancada de Potencia)</h3>
                 <p class="text-sm text-gray-300 mb-4">Arrancada pero recepción más alta, sin sentadilla profunda.</p>
                 
                 <div class="space-y-3">
@@ -656,13 +657,13 @@
                     </div>
                 </div>
 
-                <div class="mt-4 p-3 bg-blue-900 rounded text-sm">
+                <div class="mt-4 p-3 bg-yellow-900 rounded text-sm">
                     <p><strong>💡 Consejo:</strong> Power Snatch requiere explosividad. No bajes en profundidad, recibe alto.</p>
                 </div>
             </div>
 
             <div class="exercise-card">
-                <h3 class="text-2xl font-bold mb-4 text-blue-300">Muscle Snatch (Arrancada Estricta)</h3>
+                <h3 class="text-2xl font-bold mb-4 text-yellow-300">Muscle Snatch (Arrancada Estricta)</h3>
                 <p class="text-sm text-gray-300 mb-4">Arrancada sin flexión de piernas. Pura fuerza de brazos.</p>
                 
                 <div class="space-y-3">
@@ -707,13 +708,13 @@
                     </div>
                 </div>
 
-                <div class="mt-4 p-3 bg-blue-900 rounded text-sm">
+                <div class="mt-4 p-3 bg-yellow-900 rounded text-sm">
                     <p><strong>💡 Consejo:</strong> Muscle Snatch es muy difícil. Requiere mucha fuerza de hombro y espalda. No flexiones las piernas.</p>
                 </div>
             </div>
 
             <div class="exercise-card">
-                <h3 class="text-2xl font-bold mb-4 text-blue-300">Hang Snatch / Hang Power Snatch</h3>
+                <h3 class="text-2xl font-bold mb-4 text-yellow-300">Hang Snatch / Hang Power Snatch</h3>
                 <p class="text-sm text-gray-300 mb-4">Igual que versiones normales pero empezando desde posición colgante (barra en manos a altura de cadera).</p>
                 
                 <div class="space-y-3">
@@ -767,7 +768,7 @@
             </div>
 
             <div class="exercise-card">
-                <h3 class="text-2xl font-bold mb-4 text-blue-300">Split Jerk (Envión Tijera)</h3>
+                <h3 class="text-2xl font-bold mb-4 text-yellow-300">Split Jerk (Envión Tijera)</h3>
                 <p class="text-sm text-gray-300 mb-4">Barra sobre hombros, empujas explosivamente recibiendo con las piernas separadas (una adelante, una atrás).</p>
                 
                 <div class="space-y-3">
@@ -812,13 +813,13 @@
                     </div>
                 </div>
 
-                <div class="mt-4 p-3 bg-blue-900 rounded text-sm">
+                <div class="mt-4 p-3 bg-yellow-900 rounded text-sm">
                     <p><strong>💡 Consejo:</strong> Split Jerk es explosivo. La clave es brazos extendidos en la recepción y espalda recta.</p>
                 </div>
             </div>
 
             <div class="exercise-card">
-                <h3 class="text-2xl font-bold mb-4 text-blue-300">Push Jerk (Envión de Potencia)</h3>
+                <h3 class="text-2xl font-bold mb-4 text-yellow-300">Push Jerk (Envión de Potencia)</h3>
                 <p class="text-sm text-gray-300 mb-4">Similar a Split Jerk pero recibes más recogido, sin ampliar piernas tanto.</p>
                 
                 <div class="space-y-3">
@@ -863,13 +864,13 @@
                     </div>
                 </div>
 
-                <div class="mt-4 p-3 bg-blue-900 rounded text-sm">
+                <div class="mt-4 p-3 bg-yellow-900 rounded text-sm">
                     <p><strong>💡 Consejo:</strong> Push Jerk es más técnico que Split. Requiere explosividad coordinada.</p>
                 </div>
             </div>
 
             <div class="exercise-card">
-                <h3 class="text-2xl font-bold mb-4 text-blue-300">Push Press</h3>
+                <h3 class="text-2xl font-bold mb-4 text-yellow-300">Push Press</h3>
                 <p class="text-sm text-gray-300 mb-4">Empuje con ligera flexión de piernas para generar potencia, no es un envión completo.</p>
                 
                 <div class="space-y-3">
@@ -914,13 +915,13 @@
                     </div>
                 </div>
 
-                <div class="mt-4 p-3 bg-blue-900 rounded text-sm">
+                <div class="mt-4 p-3 bg-yellow-900 rounded text-sm">
                     <p><strong>💡 Consejo:</strong> Push Press es técnica pura. La flexión de piernas es pequeña, no grande como en jerk.</p>
                 </div>
             </div>
 
             <div class="exercise-card">
-                <h3 class="text-2xl font-bold mb-4 text-blue-300">Strict Press (Militar)</h3>
+                <h3 class="text-2xl font-bold mb-4 text-yellow-300">Strict Press (Militar)</h3>
                 <p class="text-sm text-gray-300 mb-4">Presión militar pura: sin flexión de piernas, sin potencia de piernas, puro empuje con brazos.</p>
                 
                 <div class="space-y-3">
@@ -965,7 +966,7 @@
                     </div>
                 </div>
 
-                <div class="mt-4 p-3 bg-blue-900 rounded text-sm">
+                <div class="mt-4 p-3 bg-yellow-900 rounded text-sm">
                     <p><strong>💡 Consejo:</strong> Strict Press es puramente de fuerza. Cero ayuda de piernas. Es el más difícil de los press.</p>
                 </div>
             </div>
@@ -978,7 +979,7 @@
             </div>
 
             <div class="exercise-card">
-                <h3 class="text-2xl font-bold mb-4 text-blue-300">Deadlift (Peso Muerto)</h3>
+                <h3 class="text-2xl font-bold mb-4 text-yellow-300">Deadlift (Peso Muerto)</h3>
                 <p class="text-sm text-gray-300 mb-4">Levanta la barra del suelo desde agachado hasta estar completamente de pie.</p>
                 
                 <div class="space-y-3">
@@ -1023,13 +1024,13 @@
                     </div>
                 </div>
 
-                <div class="mt-4 p-3 bg-blue-900 rounded text-sm">
+                <div class="mt-4 p-3 bg-yellow-900 rounded text-sm">
                     <p><strong>💡 Consejo:</strong> Deadlift: ESPALDA RECTA. Es lo más crítico. Si el pecho colapsada, será penalizado.</p>
                 </div>
             </div>
 
             <div class="exercise-card">
-                <h3 class="text-2xl font-bold mb-4 text-blue-300">Clean Pull (Tirón Cargada)</h3>
+                <h3 class="text-2xl font-bold mb-4 text-yellow-300">Clean Pull (Tirón Cargada)</h3>
                 <p class="text-sm text-gray-300 mb-4">Mismo movimiento que deadlift pero simulando el tirón de una cargada (sin recepción, solo el tirón).</p>
                 
                 <div class="space-y-3">
@@ -1074,13 +1075,13 @@
                     </div>
                 </div>
 
-                <div class="mt-4 p-3 bg-blue-900 rounded text-sm">
+                <div class="mt-4 p-3 bg-yellow-900 rounded text-sm">
                     <p><strong>💡 Consejo:</strong> Clean Pull es técnica de tirón. Espalda recta y explosividad.</p>
                 </div>
             </div>
 
             <div class="exercise-card">
-                <h3 class="text-2xl font-bold mb-4 text-blue-300">Snatch Pull (Tirón Arrancada)</h3>
+                <h3 class="text-2xl font-bold mb-4 text-yellow-300">Snatch Pull (Tirón Arrancada)</h3>
                 <p class="text-sm text-gray-300 mb-4">Mismo concepto que Clean Pull pero simulando el tirón de una arrancada (más ancho de agarre).</p>
                 
                 <div class="space-y-3">
@@ -1125,14 +1126,14 @@
                     </div>
                 </div>
 
-                <div class="mt-4 p-3 bg-blue-900 rounded text-sm">
+                <div class="mt-4 p-3 bg-yellow-900 rounded text-sm">
                     <p><strong>💡 Consejo:</strong> Snatch Pull con agarre más ancho. Espalda recta en todo momento.</p>
                 </div>
             </div>
         </div>
 
         <!-- Footer -->
-        <div class="mt-16 p-6 bg-slate-800 rounded-lg text-center">
+        <div class="mt-16 p-6 bg-neutral-800 rounded-lg text-center">
             <h3 class="text-xl font-bold mb-3">¿Preguntas o problemas?</h3>
             <p class="text-sm text-gray-300 mb-4">Si la cámara tiene problemas para detectarte o los análisis no se ven correctos, revisa:</p>
             <ul class="text-left inline-block text-sm space-y-2">
@@ -1152,3 +1153,4 @@
     </div>
 </body>
 </html>
+
