@@ -22,8 +22,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
     
-    <!-- TensorFlow.js Hand Pose Detection (Max mobile compatibility via WebGL) -->
+    <!-- TensorFlow.js Hand Pose Detection (MediaPipe WASM runtime for maximum mobile compatibility) -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/hand-pose-detection@2.0.1/dist/hand-pose-detection.min.js"></script>
 
@@ -119,7 +120,7 @@
     <!-- MENU -->
     <div id="mainMenu" class="absolute inset-0 z-50 bg-neutral-900 flex flex-col p-6 overflow-y-auto">
         <header class="mb-8 mt-4">
-            <h1 class="text-3xl font-black italic tracking-tighter flex items-center">HALTERO<span class="text-yellow-400">AI</span> <span class="text-xs bg-yellow-500 font-bold text-black px-2 py-1 rounded-md ml-3 tracking-normal not-italic shadow">V7.8</span></h1>
+            <h1 class="text-3xl font-black italic tracking-tighter flex items-center">HALTERO<span class="text-yellow-400">AI</span> <span class="text-xs bg-yellow-500 font-bold text-black px-2 py-1 rounded-md ml-3 tracking-normal not-italic shadow">V7.9</span></h1>
             <p class="text-gray-400 text-sm mt-1">Edición PWA Offline</p>
         </header>
         <div class="flex-grow grid gap-4 pb-8">
@@ -1286,20 +1287,21 @@
 
             initHandLandmarker: async function() {
                 try {
-                    // TFJS Hand Pose Detection (WebGL runtime - rock solid on mobile)
+                    // MediaPipe WASM runtime via TFJS wrapper (rock solid, fast and runs offline/locally via WASM)
                     const model = handPoseDetection.SupportedModels.MediaPipeHands;
                     const detectorConfig = {
-                        runtime: 'tfjs',
+                        runtime: 'mediapipe',
+                        solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/hands',
                         modelType: 'lite',
                         maxHands: 1
                     };
                     this.handLandmarker = await handPoseDetection.createDetector(model, detectorConfig);
                     this.handLandmarkerReady = true;
-                    console.log('TFJS Hand Pose Detector listo ✓');
+                    console.log('MediaPipe WASM Hand Detector listo ✓');
                 } catch(e) {
-                    console.error('Error iniciando TFJS Hand Detector:', e);
+                    console.error('Error iniciando MediaPipe Hand Detector:', e);
                     // Critical debug info for mobile users since they don't have a console
-                    alert("TFJS Error en el móvil:\n" + e.message);
+                    alert("Error en el detector de mano:\n" + e.message);
                 }
             },
 
@@ -1575,7 +1577,9 @@
                     // New API: TFJS Hand Pose Detection
                     if (this.mode === 'AI' && this.settings.gestureRecord && this.isCameraActive && this.video.srcObject) {
                         if (this.handLandmarkerReady && this.handLandmarker && (this.frameCount % 3 === 0 || !isMobile)) {
+                            console.log("[DEBUG] Running hand estimation on frame...");
                             this.handLandmarker.estimateHands(this.video).then(hands => {
+                                console.log("[DEBUG] Hand estimation returned", hands ? hands.length : 0, "hands.");
                                 if (hands && hands.length > 0) {
                                     const h = hands[0];
                                     const vw = this.video.videoWidth;
@@ -1595,7 +1599,9 @@
                                 } else {
                                     this.onHandsResults({ landmarks: [], handedness: [] });
                                 }
-                            }).catch(e => { /* silent */ });
+                            }).catch(e => {
+                                console.error("[DEBUG] estimateHands error:", e);
+                            });
                         }
                     }
                     // Only run body pose if we are NOT using the live webcam stream (i.e. we are playing a video file).
