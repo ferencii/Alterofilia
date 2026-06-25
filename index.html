@@ -25,6 +25,7 @@
     
     <!-- TensorFlow.js Hand Pose Detection (Max mobile compatibility via WebGL) -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/hand-pose-detection"></script>
 
@@ -120,7 +121,7 @@
     <!-- MENU -->
     <div id="mainMenu" class="absolute inset-0 z-50 bg-neutral-900 flex flex-col p-6 overflow-y-auto">
         <header class="mb-8 mt-4">
-            <h1 class="text-3xl font-black italic tracking-tighter flex items-center">HALTERO<span class="text-yellow-400">AI</span> <span class="text-xs bg-yellow-500 font-bold text-black px-2 py-1 rounded-md ml-3 tracking-normal not-italic shadow">V7.5</span></h1>
+            <h1 class="text-3xl font-black italic tracking-tighter flex items-center">HALTERO<span class="text-yellow-400">AI</span> <span class="text-xs bg-yellow-500 font-bold text-black px-2 py-1 rounded-md ml-3 tracking-normal not-italic shadow">V7.6</span></h1>
             <p class="text-gray-400 text-sm mt-1">Edición PWA Offline</p>
         </header>
         <div class="flex-grow grid gap-4 pb-8">
@@ -1278,6 +1279,8 @@
                     console.log('TFJS Hand Pose Detector listo ✓');
                 } catch(e) {
                     console.error('Error iniciando TFJS Hand Detector:', e);
+                    // Critical debug info for mobile users since they don't have a console
+                    alert("TFJS Error en el móvil:\n" + e.message);
                 }
             },
 
