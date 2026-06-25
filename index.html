@@ -119,7 +119,7 @@
     <!-- MENU -->
     <div id="mainMenu" class="absolute inset-0 z-50 bg-neutral-900 flex flex-col p-6 overflow-y-auto">
         <header class="mb-8 mt-4">
-            <h1 class="text-3xl font-black italic tracking-tighter flex items-center">HALTERO<span class="text-yellow-400">AI</span> <span class="text-xs bg-yellow-500 font-bold text-black px-2 py-1 rounded-md ml-3 tracking-normal not-italic shadow">V7.7</span></h1>
+            <h1 class="text-3xl font-black italic tracking-tighter flex items-center">HALTERO<span class="text-yellow-400">AI</span> <span class="text-xs bg-yellow-500 font-bold text-black px-2 py-1 rounded-md ml-3 tracking-normal not-italic shadow">V7.8</span></h1>
             <p class="text-gray-400 text-sm mt-1">Edición PWA Offline</p>
         </header>
         <div class="flex-grow grid gap-4 pb-8">
@@ -423,7 +423,7 @@
                     const store = tx.objectStore('lifts');
                     const countReq = store.count();
                     countReq.onsuccess = () => {
-                        if (countReq.result >= 500) {
+                        if (countReq.result >= 50) {
                             const curReq = store.openCursor();
                             curReq.onsuccess = (e) => {
                                 const cursor = e.target.result;
@@ -682,10 +682,8 @@
                     this.video.onended = () => {
                         this.stopProcessing();
                         this.setMainPlayIcons(false);
-                        if (this.isRecording) {
-                            this.isRecording = false;
-                            const btn = document.getElementById('recInnerAI');
-                            if (btn) { btn.classList.replace('rounded-sm', 'rounded-full'); btn.classList.remove('scale-50'); }
+                        // If we are playing back a video file (analysis/playback phase)
+                        if (!this.video.srcObject) {
                             document.getElementById('valPhase').innerText = "ANALIZANDO";
                             document.getElementById('valPhase').className = "font-bold text-xs uppercase mt-1 text-white";
                             setTimeout(() => this.analyzeLift(), 200);
@@ -834,6 +832,9 @@
                     alert("Este levantamiento no tiene video guardado.");
                     return;
                 }
+                this.isHistoryPlayback = true;
+                this.currentVideoBlob = lift.videoBlob;
+                
                 const hw = document.getElementById('historyWorkspace');
                 if (hw) hw.classList.add('hide');
                 
@@ -843,17 +844,28 @@
                 this.currentObjectUrl = url;
                 
                 document.getElementById('camStartOverlay').classList.add('hide');
-                if (this.mode === 'AI') document.getElementById('aiVideoControls').classList.remove('hide');
-                else document.getElementById('pathVideoControls').classList.remove('hide');
+                if (this.mode === 'AI') {
+                    document.getElementById('aiVideoControls').classList.remove('hide');
+                    document.getElementById('btnRecordAI').classList.add('hide'); // Hide record button
+                } else {
+                    document.getElementById('pathVideoControls').classList.remove('hide');
+                }
                 
                 this.video.src = url;
+                this.video.classList.remove('scale-x-[-1]'); 
+                this.canvas.classList.remove('scale-x-[-1]');
                 this.video.classList.add('object-contain-video');
+                this.canvas.classList.add('object-contain-video');
                 
                 this.video.onloadeddata = () => {
                     this.isCameraActive = false;
                     this.video.play().catch(e => console.warn('Auto-play prevent', e));
                     this.setMainPlayIcons(true);
                 };
+
+                this.frameData = [];
+                this.barPath = [];
+                this.lastHandLm = null;
             },
             
             deleteFromHistory: async function(id) {
@@ -1090,6 +1102,9 @@
                     this.gestureState.holdFrames = 0;
                     this.cancelGestureCountdown();
                     this.lastHandLm = null;
+                    if (this.video.srcObject) {
+                        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    }
                     return;
                 }
                 this.lastHandLm = handLm;
@@ -1097,6 +1112,12 @@
                 this.lastMap = map;
                 
                 this.detectGestureToggle(handLm, handedness);
+
+                // Draw the hands directly if webcam is active (since body pose doesn't run during preview)
+                if (this.video.srcObject) {
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    this.renderHands();
+                }
             },
 
 
@@ -1374,6 +1395,8 @@
                     this.applyCameraMirror();
                     
                     document.getElementById('camStartOverlay').classList.add('hide');
+                    document.getElementById('btnRecordAI').classList.remove('hide'); // Show record button
+                    document.getElementById('bodyStatus').classList.add('hide'); // Hide body status initially
                     if (this.mode === 'AI') document.getElementById('hudAI').classList.remove('hide');
                     if (this.mode === 'PATH') {
                         document.getElementById('hudPath').classList.remove('hide');
@@ -1388,6 +1411,9 @@
                 if(file) {
                     this.stopCamera();
                     this.revokeMainObjectUrl();
+                    this.isHistoryPlayback = false;
+                    this.currentVideoBlob = file;
+                    
                     const url = URL.createObjectURL(file);
                     this.currentObjectUrl = url;
                     this.video.srcObject = null; this.video.src = url;
@@ -1399,6 +1425,7 @@
                     this.canvas.classList.remove('object-contain-video');
                     
                     document.getElementById('camStartOverlay').classList.add('hide');
+                    document.getElementById('btnRecordAI').classList.add('hide'); // Hide record button during playback
                     
                     if (this.mode === 'AI') {
                         document.getElementById('hudAI').classList.remove('hide');
@@ -1418,6 +1445,10 @@
                         const phaseEl = document.getElementById('valPhase');
                         if(phaseEl) { phaseEl.innerText = "LISTO PARA REPRODUCIR"; phaseEl.className = "font-bold text-xs uppercase mt-1 text-yellow-300"; }
                     };
+                    
+                    this.frameData = [];
+                    this.barPath = [];
+                    this.lastHandLm = null;
                     input.value = "";
                 }
             },
@@ -1436,6 +1467,8 @@
                 document.getElementById('camStartOverlay').classList.remove('hide');
                 document.getElementById('aiVideoControls').classList.add('hide');
                 document.getElementById('pathVideoControls').classList.add('hide');
+                document.getElementById('btnRecordAI').classList.remove('hide'); // Show record button again
+                document.getElementById('bodyStatus').classList.add('hide'); // Hide body status
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
                 this.barPath = [];
                 this.frameData = [];
@@ -1447,6 +1480,12 @@
             toggleMainVideoPlay: function() {
                 if (this.video.paused) {
                     if (this.video.ended) this.video.currentTime = 0;
+                    if (this.video.currentTime < 0.1) {
+                        this.frameData = [];
+                        this.barPath = [];
+                        this.lastHandLm = null;
+                        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    }
                     this.video.play();
                     this.startProcessing();
                     this.setMainPlayIcons(true);
@@ -1458,7 +1497,13 @@
             },
             
             onSeekMain: function(val) {
-                if (this.video.duration) this.video.currentTime = (val / 100) * this.video.duration;
+                if (this.video.duration) {
+                    this.video.currentTime = (val / 100) * this.video.duration;
+                    this.frameData = [];
+                    this.barPath = [];
+                    this.lastHandLm = null;
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                }
             },
 
             renderHands: function() {
@@ -1553,7 +1598,10 @@
                             }).catch(e => { /* silent */ });
                         }
                     }
-                    if (this.pose) await this.pose.send({image: this.video});
+                    // Only run body pose if we are NOT using the live webcam stream (i.e. we are playing a video file).
+                    if (this.pose && !this.video.srcObject) {
+                        await this.pose.send({image: this.video});
+                    }
                 } catch (e) {
                     console.error(e);
                 }
@@ -1679,7 +1727,9 @@
                     document.getElementById('valKnee').innerText = Math.round(kneeAngle) + " grados";
                     document.getElementById('valHip').innerText = Math.round(hipAngle) + " grados";
                     
-                    if (this.isRecording) {
+                    // Collect frame data during playback analysis (when webcam is not active)
+                    const isPlaybackAnalysis = !this.video.srcObject;
+                    if (isPlaybackAnalysis) {
                         const elbow = lm[14]; const wrist = lm[16]; // Right arm
                         const elbowAngle = this.calculateAngle(shoulder, elbow, wrist);
                         let smKnee = kneeAngle, smHip = hipAngle, smElbow = elbowAngle;
@@ -1751,8 +1801,8 @@
                 } else {
                     this.isRecording = false;
                     btn.classList.replace('rounded-sm', 'rounded-full'); btn.classList.remove('scale-50');
-                    document.getElementById('valPhase').innerText = "ANALIZANDO";
-                    document.getElementById('valPhase').className = "font-bold text-xs uppercase mt-1 text-white";
+                    document.getElementById('valPhase').innerText = "REPRODUCE PARA ANALIZAR";
+                    document.getElementById('valPhase').className = "font-bold text-xs uppercase mt-1 text-yellow-300 animate-pulse";
                     if (!this.video.srcObject) {
                         this.video.pause();
                         this.stopProcessing();
@@ -1780,12 +1830,37 @@
                                 a.click();
                                 setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
                             }
-                            setTimeout(() => this.analyzeLift(), 100);
+                            
+                            // Stop camera and load recorded video for playback analysis
+                            this.stopCamera();
+                            const url = URL.createObjectURL(this.currentVideoBlob);
+                            this.currentObjectUrl = url;
+                            this.video.srcObject = null;
+                            this.video.src = url;
+                            
+                            this.video.classList.remove('scale-x-[-1]'); 
+                            this.canvas.classList.remove('scale-x-[-1]');
+                            this.video.classList.add('object-contain-video');
+                            this.canvas.classList.add('object-contain-video');
+                            
+                            document.getElementById('aiVideoControls').classList.remove('hide');
+                            document.getElementById('btnRecordAI').classList.add('hide'); // Hide record button during playback
+                            
+                            const phaseEl = document.getElementById('valPhase');
+                            if(phaseEl) { 
+                                phaseEl.innerText = "REPRODUCE PARA ANALIZAR"; 
+                                phaseEl.className = "font-bold text-xs uppercase mt-1 text-yellow-300 animate-pulse"; 
+                            }
+                            
+                            this.frameData = [];
+                            this.barPath = [];
+                            this.lastHandLm = null;
+                            this.isHistoryPlayback = false;
                         };
                         this.mediaRecorder.stop();
                     } else {
                         this.currentVideoBlob = null;
-                        setTimeout(() => this.analyzeLift(), 200);
+                        this.resetInput();
                     }
                 }
             },
@@ -1864,13 +1939,15 @@
                     });
                     document.getElementById('aiModal').classList.remove('hidden');
                     
-                    // Save to local DB
-                    if (isMobile) {
+                    // Save to local DB (including the video blob so it's fully playable from history)
+                    if (isMobile && !this.isHistoryPlayback) {
                         DBHelper.saveLift({
                             date: new Date().toISOString(),
                             exercise: type,
                             score: Math.max(0, score),
-                            data: this.frameData
+                            data: this.frameData,
+                            videoBlob: this.currentVideoBlob,
+                            mode: this.mode
                         }).catch(e => console.warn('Save error:', e));
                     }
                 } catch(e) { alert("Error en análisis: " + e.message); }
