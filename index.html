@@ -20,7 +20,6 @@
     
     <!-- MediaPipe -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
 
@@ -115,7 +114,7 @@
     <!-- MENU -->
     <div id="mainMenu" class="absolute inset-0 z-50 bg-neutral-900 flex flex-col p-6 overflow-y-auto">
         <header class="mb-8 mt-4">
-            <h1 class="text-3xl font-black italic tracking-tighter flex items-center">HALTERO<span class="text-yellow-400">AI</span> <span class="text-xs bg-yellow-500 font-bold text-black px-2 py-1 rounded-md ml-3 tracking-normal not-italic shadow">V6.2</span></h1>
+            <h1 class="text-3xl font-black italic tracking-tighter flex items-center">HALTERO<span class="text-yellow-400">AI</span> <span class="text-xs bg-yellow-500 font-bold text-black px-2 py-1 rounded-md ml-3 tracking-normal not-italic shadow">V6.3</span></h1>
             <p class="text-gray-400 text-sm mt-1">Edición PWA Offline</p>
         </header>
         <div class="flex-grow grid gap-4 pb-8">
@@ -655,9 +654,6 @@
                     this.pose = new Pose({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`});
                     this.configurePose('AI');
                     this.pose.onResults(this.onPoseResults.bind(this));
-                    this.hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-                    this.configureHands();
-                    this.hands.onResults(this.onHandsResults.bind(this));
                     this.setupPanEvents('wrapTop', 'top'); this.setupPanEvents('wrapBot', 'bot');
                     document.getElementById('vidTop').ontimeupdate = () => this.updateSeekUI('top');
                     document.getElementById('vidBot').ontimeupdate = () => this.updateSeekUI('bot');
@@ -1061,108 +1057,7 @@
                 doOverlay();
             },
 
-            onHandsResults: function(results) {
-                if (!this.settings.gestureRecord) return;
-                if (this.mode !== 'AI') return;
-                if (!this.isCameraActive || !this.video || !this.video.srcObject) {
-                    this.cancelGestureCountdown();
-                    return;
-                }
-                
-                // Limpiar el canvas ya que Pose no está corriendo ahora mismo
-                const map = this.getCoverMapping();
-                if (map) {
-                    this.currentMap = map;
-                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                }
 
-                const handLm = results && results.multiHandLandmarks ? results.multiHandLandmarks[0] : null;
-                if (!handLm) {
-                    this.gestureState.holdFrames = 0;
-                    this.cancelGestureCountdown();
-                    return;
-                }
-
-                // Dibujar la mano
-                if (map && window.drawConnectors && window.drawLandmarks) {
-                    this.ctx.save();
-                    this.ctx.translate(map.offsetX, map.offsetY);
-                    this.ctx.scale(map.scale, map.scale);
-                    window.drawConnectors(this.ctx, handLm, HAND_CONNECTIONS, {color: '#facc15', lineWidth: 3});
-                    window.drawLandmarks(this.ctx, handLm, {color: '#000000', lineWidth: 1, radius: 3});
-                    this.ctx.restore();
-                }
-
-                const handedness = results && results.multiHandedness && results.multiHandedness[0]
-                    ? results.multiHandedness[0].label
-                    : null;
-                
-                // Dibujar texto según los dedos
-                if (map) {
-                    const fingers = this.getFingerState(handLm, handedness);
-                    let text = "";
-                    if (fingers.openPalm) text = "GRABACIÓN DIRECTA";
-                    else if (fingers.count > 0) text = `GRABACIÓN EN ${fingers.count}s`;
-                    
-                    if (text) {
-                        this.ctx.save();
-                        this.ctx.font = "bold 24px 'Bitter', serif";
-                        this.ctx.fillStyle = "#facc15"; // Amarillo
-                        this.ctx.textAlign = "center";
-                        this.ctx.shadowColor = "black";
-                        this.ctx.shadowBlur = 4;
-                        // Dibujar texto encima de la muñeca
-                        const wristX = map.offsetX + handLm[0].x * map.scaledW;
-                        const wristY = map.offsetY + handLm[0].y * map.scaledH - 80;
-                        this.ctx.fillText(text, wristX, wristY);
-                        this.ctx.restore();
-                    }
-                }
-                
-                this.detectGestureToggle(handLm, handedness);
-            },
-
-            detectGestureToggle: function(handLm, handedness) {
-                if (!handLm) return;
-                const now = performance.now();
-                const fingers = this.getFingerState(handLm, handedness);
-                const fingerCount = fingers.count;
-                const openPalm = fingers.openPalm;
-                const wrist = handLm[0];
-                const isRaised = wrist && wrist.y < 0.9;
-                if (!isRaised) {
-                    this.gestureState.holdFrames = 0;
-                    this.cancelGestureCountdown();
-                    return;
-                }
-                if ((now - this.gestureState.lastToggleTime) < 1200) {
-                    this.cancelGestureCountdown();
-                    return;
-                }
-                if (openPalm) {
-                    this.cancelGestureCountdown();
-                    if (!this.gestureState.openPalmStartTime) {
-                        this.gestureState.openPalmStartTime = now;
-                    }
-                    if ((now - this.gestureState.openPalmStartTime) >= 1500 && (now - this.gestureState.lastToggleTime) > 1200) {
-                        this.gestureState.openPalmStartTime = 0;
-                        this.gestureState.lastToggleTime = now;
-                        this.toggleRecording({ doubleConfirm: true });
-                    }
-                    return;
-                }
-                this.gestureState.openPalmStartTime = 0;
-                this.gestureState.holdFrames = 0;
-                if (this.isRecording) {
-                    this.cancelGestureCountdown();
-                    return;
-                }
-                if (fingerCount >= 1) {
-                    this.updateGestureCountdown(fingerCount, now);
-                } else {
-                    this.cancelGestureCountdown();
-                }
-            },
 
             updateGestureCountdown: function(targetCount, now) {
                 const gs = this.gestureState.countdown;
@@ -1478,11 +1373,7 @@
                 this.isProcessingFrame = true;
                 this.lastFrameTime = timestamp || performance.now();
                 try {
-                    if (this.mode === 'AI' && this.settings.gestureRecord && !this.isRecording && this.isCameraActive && this.video.srcObject) {
-                        if (this.hands) await this.hands.send({image: this.video});
-                    } else {
-                        if (this.pose) await this.pose.send({image: this.video});
-                    }
+                    if (this.pose) await this.pose.send({image: this.video});
                 } catch (e) {
                     console.error(e);
                 }
@@ -1493,11 +1384,6 @@
             onPoseResults: function(results) {
                 if (this.mode !== 'AI' && this.mode !== 'PATH') return;
                 
-                if (this.waitingForPose) {
-                    this.waitingForPose = false;
-                    this.startMediaRecorder(this.pendingRecordOpts);
-                }
-
                 const map = this.getCoverMapping();
                 if (!map) return;
                 this.currentMap = map;
@@ -1506,9 +1392,48 @@
                 if (!results.poseLandmarks) {
                     if(statusEl) statusEl.classList.remove('hide');
                     this.currentMap = null;
+                    this.cancelGestureCountdown();
                     return;
                 }
                 if(statusEl) statusEl.classList.add('hide');
+
+                // Gesture Detection via Pose
+                if (this.settings.gestureRecord && this.isCameraActive && this.video && this.video.srcObject) {
+                    const lm = results.poseLandmarks;
+                    const lWrist = lm[15]; const rWrist = lm[16];
+                    const lShoulder = lm[11]; const rShoulder = lm[12];
+                    const nose = lm[0];
+                    
+                    const lRaised = lWrist && lShoulder && nose && lWrist.visibility > 0.6 && lWrist.y < nose.y;
+                    const rRaised = rWrist && rShoulder && nose && rWrist.visibility > 0.6 && rWrist.y < nose.y;
+                    const isRaised = lRaised || rRaised;
+                    
+                    if (isRaised) {
+                        const now = performance.now();
+                        if ((now - this.gestureState.lastToggleTime) > 2000) {
+                            this.updateGestureCountdown(3, now);
+                            
+                            // Draw Countdown text near the raised wrist
+                            const activeWrist = lRaised ? lWrist : rWrist;
+                            let remaining = 3 - this.gestureState.countdown.lastTick;
+                            if (remaining > 3) remaining = 3;
+                            if (remaining < 1) remaining = 1;
+                            const text = this.isRecording ? `PARANDO EN ${remaining}s` : `GRABANDO EN ${remaining}s`;
+                            this.ctx.save();
+                            this.ctx.font = "bold 24px 'Bitter', serif";
+                            this.ctx.fillStyle = this.isRecording ? "#ef4444" : "#facc15"; 
+                            this.ctx.textAlign = "center";
+                            this.ctx.shadowColor = "black";
+                            this.ctx.shadowBlur = 4;
+                            const wristX = map.offsetX + activeWrist.x * map.scaledW;
+                            const wristY = map.offsetY + activeWrist.y * map.scaledH - 80;
+                            this.ctx.fillText(text, wristX, wristY);
+                            this.ctx.restore();
+                        }
+                    } else {
+                        this.cancelGestureCountdown();
+                    }
+                }
 
                 if (this.mode === 'AI') this.renderAI(results.poseLandmarks);
                 else if (this.mode === 'PATH') this.renderPath(results.poseLandmarks);
@@ -1663,18 +1588,7 @@
                 if (!this.isRecording) {
                     this.isRecording = true; this.frameData = [];
                     btn.classList.replace('rounded-full', 'rounded-sm'); btn.classList.add('scale-50');
-                    
-                    if (this.isCameraActive && this.stream && opts && opts.doubleConfirm) {
-                        // Viene del gesto. Esperamos a Pose.
-                        this.waitingForPose = true;
-                        this.pendingRecordOpts = opts;
-                        document.getElementById('valPhase').innerText = "PREPARANDO IA CORPORAL... ESPERA";
-                        document.getElementById('valPhase').className = "font-bold text-xs uppercase mt-1 text-yellow-500 animate-pulse";
-                    } else {
-                        // Manual
-                        this.waitingForPose = false;
-                        this.startMediaRecorder(opts);
-                    }
+                    this.startMediaRecorder(opts);
 
                     if (!this.video.srcObject && this.video.paused) {
                         this.video.play();
