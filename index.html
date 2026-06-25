@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -113,29 +113,29 @@
 <body class="h-screen w-screen flex flex-col">
 
     <!-- MENU -->
-    <div id="mainMenu" class="absolute inset-0 z-50 bg-slate-900 flex flex-col p-6 overflow-y-auto">
+    <div id="mainMenu" class="absolute inset-0 z-50 bg-neutral-900 flex flex-col p-6 overflow-y-auto">
         <header class="mb-8 mt-4">
-            <h1 class="text-3xl font-black italic tracking-tighter">HALTERO<span class="text-blue-500">AI</span></h1>
-            <p class="text-gray-400 text-sm">Versión Ferenciana Ultimate 5.7</p>
+            <h1 class="text-3xl font-black italic tracking-tighter flex items-center">HALTERO<span class="text-yellow-400">AI</span> <span class="text-xs bg-yellow-500 font-bold text-white px-2 py-1 rounded-md ml-3 tracking-normal not-italic shadow">V6.0</span></h1>
+            <p class="text-gray-400 text-sm mt-1">Edición PWA Offline</p>
         </header>
         <div class="flex-grow grid gap-4 pb-8">
-            <button ontouchstart="" onclick="app.setMode('AI')" class="menu-card bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6 rounded-2xl text-left shadow-lg relative overflow-hidden group">
-                <div class="absolute right-0 top-0 p-4 opacity-20 group-active:opacity-40 transition"><i class="fa-solid fa-robot text-6xl text-blue-500"></i></div>
+            <button ontouchstart="" onclick="app.setMode('AI')" class="menu-card bg-gradient-to-br from-neutral-800 to-neutral-900 border border-neutral-700 p-6 rounded-2xl text-left shadow-lg relative overflow-hidden group">
+                <div class="absolute right-0 top-0 p-4 opacity-20 group-active:opacity-40 transition"><i class="fa-solid fa-robot text-6xl text-yellow-400"></i></div>
                 <div class="relative z-10"><h2 class="text-xl font-bold mt-2 text-white">Coach IA</h2><p class="text-sm text-gray-400 mt-1">Análisis biomecánico inteligente según el ejercicio.</p></div>
             </button>
-            <button ontouchstart="" onclick="app.setMode('PATH')" class="menu-card bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6 rounded-2xl text-left shadow-lg relative overflow-hidden group">
+            <button ontouchstart="" onclick="app.setMode('PATH')" class="menu-card bg-gradient-to-br from-neutral-800 to-neutral-900 border border-neutral-700 p-6 rounded-2xl text-left shadow-lg relative overflow-hidden group">
                 <div class="absolute right-0 top-0 p-4 opacity-20 group-active:opacity-40 transition"><i class="fa-solid fa-wave-square text-6xl text-green-500"></i></div>
                 <div class="relative z-10"><h2 class="text-xl font-bold text-white">Trayectoria</h2><p class="text-sm text-gray-400 mt-1">Rastreo visual de la barra.</p></div>
             </button>
-            <button ontouchstart="" onclick="app.setMode('COMPARE')" class="menu-card bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6 rounded-2xl text-left shadow-lg relative overflow-hidden group">
+            <button ontouchstart="" onclick="app.setMode('COMPARE')" class="menu-card bg-gradient-to-br from-neutral-800 to-neutral-900 border border-neutral-700 p-6 rounded-2xl text-left shadow-lg relative overflow-hidden group">
                 <div class="absolute right-0 top-0 p-4 opacity-20 group-active:opacity-40 transition"><i class="fa-solid fa-table-columns text-6xl text-purple-500"></i></div>
                 <div class="relative z-10"><h2 class="text-xl font-bold text-white">Lado a Lado</h2><p class="text-sm text-gray-400 mt-1">Compara videos frame a frame.</p></div>
             </button>
-            <button ontouchstart="" onclick="app.openHelp()" class="menu-card bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6 rounded-2xl text-left shadow-lg relative overflow-hidden group">
+            <button ontouchstart="" onclick="app.openHelp()" class="menu-card bg-gradient-to-br from-neutral-800 to-neutral-900 border border-neutral-700 p-6 rounded-2xl text-left shadow-lg relative overflow-hidden group">
                 <div class="absolute right-0 top-0 p-4 opacity-20 group-active:opacity-40 transition"><i class="fa-solid fa-circle-question text-6xl text-cyan-400"></i></div>
                 <div class="relative z-10"><h2 class="text-xl font-bold text-white">Guía</h2><p class="text-sm text-gray-400 mt-1">Cómo grabar y colocar la cámara.</p></div>
             </button>
-            <button ontouchstart="" onclick="app.openHistory()" class="menu-card bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6 rounded-2xl text-left shadow-lg relative overflow-hidden group">
+            <button ontouchstart="" onclick="app.openHistory()" class="menu-card bg-gradient-to-br from-neutral-800 to-neutral-900 border border-neutral-700 p-6 rounded-2xl text-left shadow-lg relative overflow-hidden group">
                 <div class="absolute right-0 top-0 p-4 opacity-20 group-active:opacity-40 transition"><i class="fa-solid fa-clock-rotate-left text-6xl text-orange-400"></i></div>
                 <div class="relative z-10"><h2 class="text-xl font-bold text-white">Historial</h2><p class="text-sm text-gray-400 mt-1">Revisa tus últimos levantamientos.</p></div>
             </button>
@@ -145,9 +145,9 @@
     <!-- WORKSPACE HEADER -->
     <div id="workspaceHeader" class="glass h-14 flex items-center justify-between px-4 z-40 hide">
         <button onclick="app.goHome()" class="text-gray-300 hover:text-white"><i class="fa-solid fa-arrow-left"></i> Menú</button>
-        <h2 id="workspaceTitle" class="font-bold text-sm tracking-wide uppercase text-blue-400">MODO</h2>
+        <h2 id="workspaceTitle" class="font-bold text-sm tracking-wide uppercase text-yellow-400">MODO</h2>
         <div id="exerciseSelectorWrapper" class="hide flex items-center gap-2 max-w-[60%]">
-            <select id="exerciseSelect" class="bg-slate-800 text-xs rounded border border-slate-600 px-2 py-1 outline-none w-full truncate">
+            <select id="exerciseSelect" class="bg-neutral-800 text-xs rounded border border-neutral-600 px-2 py-1 outline-none w-full truncate">
                 <optgroup label="SENTADILLAS">
                     <option value="BACK_SQUAT">Back Squat (Trasera)</option>
                     <option value="FRONT_SQUAT">Front Squat (Frontal)</option>
@@ -178,25 +178,25 @@
                     <option value="SNATCH_PULL">Snatch Pull (Tirón Arrancada)</option>
                 </optgroup>
             </select>
-            <button id="guideToggleBtn" ontouchstart="" onclick="app.toggleExerciseGuide()" class="glass px-2 py-1 rounded text-[10px] text-blue-300 border border-blue-500/30 hover:text-white active:text-blue-200 hide">
+            <button id="guideToggleBtn" ontouchstart="" onclick="app.toggleExerciseGuide()" class="glass px-2 py-1 rounded text-[10px] text-yellow-300 border border-yellow-400/30 hover:text-white active:text-yellow-200 hide">
                 <i class="fa-solid fa-circle-question mr-1"></i>Guia
             </button>
-            <button id="aiSettingsToggleBtn" ontouchstart="" onclick="app.toggleAiSettings()" class="glass px-2 py-1 rounded text-[10px] text-gray-300 border border-slate-500/30 hover:text-white active:text-gray-200 hide">
+            <button id="aiSettingsToggleBtn" ontouchstart="" onclick="app.toggleAiSettings()" class="glass px-2 py-1 rounded text-[10px] text-gray-300 border border-neutral-500/30 hover:text-white active:text-gray-200 hide">
                 <i class="fa-solid fa-gear mr-1"></i>Ajustes
             </button>
         </div>
-        <button id="cameraToggleBtn" ontouchstart="" onclick="app.toggleCameraFacing(true)" class="glass px-2 py-1 rounded text-[10px] text-gray-300 border border-slate-500/30 hover:text-white active:text-gray-200 hide">
+        <button id="cameraToggleBtn" ontouchstart="" onclick="app.toggleCameraFacing(true)" class="glass px-2 py-1 rounded text-[10px] text-gray-300 border border-neutral-500/30 hover:text-white active:text-gray-200 hide">
             <i class="fa-solid fa-camera-rotate mr-1"></i><span id="cameraToggleLabel">Camara</span>
         </button>
     </div>
 
     <!-- HISTORY WORKSPACE -->
-    <div id="historyWorkspace" class="flex-grow flex flex-col hide bg-slate-900 overflow-y-auto p-4 z-30 pt-[calc(1.5rem+var(--safe-top))]">
+    <div id="historyWorkspace" class="flex-grow flex flex-col hide bg-neutral-900 overflow-y-auto p-4 z-30 pt-[calc(1.5rem+var(--safe-top))]">
         <div class="flex justify-between items-center mb-4">
             <h3 class="text-gray-300 text-sm font-bold">Tus Grabaciones</h3>
             <div class="flex gap-2">
-                <button onclick="app.exportHistory()" class="bg-slate-800 border border-slate-700 text-gray-300 px-3 py-1 rounded text-xs active:bg-slate-700"><i class="fa-solid fa-download mr-1"></i>Exportar</button>
-                <button onclick="document.getElementById('importHistoryInput').click()" class="bg-blue-900 border border-blue-700 text-blue-200 px-3 py-1 rounded text-xs active:bg-blue-800"><i class="fa-solid fa-upload mr-1"></i>Importar</button>
+                <button onclick="app.exportHistory()" class="bg-neutral-800 border border-neutral-700 text-gray-300 px-3 py-1 rounded text-xs active:bg-neutral-700"><i class="fa-solid fa-download mr-1"></i>Exportar</button>
+                <button onclick="document.getElementById('importHistoryInput').click()" class="bg-yellow-900 border border-yellow-700 text-yellow-200 px-3 py-1 rounded text-xs active:bg-yellow-800"><i class="fa-solid fa-upload mr-1"></i>Importar</button>
                 <input type="file" id="importHistoryInput" accept=".json, video/mp4, video/webm" multiple class="hidden" onchange="app.importHistory(event)">
             </div>
         </div>
@@ -224,21 +224,21 @@
         <div id="flashOverlay" class="absolute inset-0 bg-white pointer-events-none z-50"></div>
 
         <!-- Start Overlay -->
-        <div id="camStartOverlay" class="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center z-30">
+        <div id="camStartOverlay" class="absolute inset-0 bg-neutral-900/90 flex flex-col items-center justify-center z-30">
             <div class="text-center p-6 max-w-sm">
-                <div class="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/30"><i class="fa-solid fa-camera text-3xl"></i></div>
+                <div class="w-20 h-20 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-yellow-400/30"><i class="fa-solid fa-camera text-3xl"></i></div>
                 <h3 class="text-xl font-bold mb-2">Cámara Lista</h3>
                 <p id="camInstructions" class="text-sm text-gray-400 mb-6">Asegúrate de que se vea todo el cuerpo de perfil.</p>
                 <div class="flex flex-col gap-2 justify-center sm:flex-row">
-                    <button ontouchstart="" onclick="app.startCamera()" class="bg-white text-slate-900 font-bold py-3 px-6 rounded-xl hover:bg-gray-100 active:bg-gray-200 w-full sm:w-auto">Activar Cámara</button>
-                    <label class="bg-slate-700 text-white font-bold py-3 px-6 rounded-xl cursor-pointer hover:bg-slate-600 active:bg-slate-800 w-full sm:w-auto text-center"><i class="fa-solid fa-upload"></i><input type="file" accept="video/*" class="hidden" onchange="app.handleFileUpload(this)"></label>
+                    <button ontouchstart="" onclick="app.startCamera()" class="bg-white text-neutral-900 font-bold py-3 px-6 rounded-xl hover:bg-gray-100 active:bg-gray-200 w-full sm:w-auto">Activar Cámara</button>
+                    <label class="bg-neutral-700 text-white font-bold py-3 px-6 rounded-xl cursor-pointer hover:bg-neutral-600 active:bg-neutral-800 w-full sm:w-auto text-center"><i class="fa-solid fa-upload"></i><input type="file" accept="video/*" class="hidden" onchange="app.handleFileUpload(this)"></label>
                 </div>
             </div>
         </div>
 
         <!-- AI Playback Controls (NEW for uploaded videos) -->
         <div id="aiVideoControls" class="absolute bottom-32 left-0 w-full px-4 z-40 hide flex flex-col gap-2">
-            <div class="flex justify-between items-center bg-slate-900/80 rounded-lg p-3 backdrop-blur flex-wrap gap-2 sm:flex-nowrap">
+            <div class="flex justify-between items-center bg-neutral-900/80 rounded-lg p-3 backdrop-blur flex-wrap gap-2 sm:flex-nowrap">
                 <button ontouchstart="" onclick="app.resetInput()" class="text-red-400 hover:text-white active:text-red-300 px-2 text-xs font-bold border border-red-900/50 rounded py-1 flex-shrink-0"><i class="fa-solid fa-rotate mr-1"></i> CAMBIAR</button>
                 
                 <div class="flex items-center gap-2 flex-grow justify-center min-w-0 sm:gap-4">
@@ -253,12 +253,12 @@
         <!-- AI HUD -->
         <div id="hudAI" class="absolute bottom-0 left-0 w-full p-4 pb-8 bg-gradient-to-t from-black to-transparent hide z-40">
             <div class="flex justify-center mb-4">
-                <button ontouchstart="" id="btnRecordAI" class="w-16 h-16 rounded-full border-4 border-slate-500 flex items-center justify-center transition-transform active:scale-95" onclick="app.toggleRecording()">
+                <button ontouchstart="" id="btnRecordAI" class="w-16 h-16 rounded-full border-4 border-neutral-500 flex items-center justify-center transition-transform active:scale-95" onclick="app.toggleRecording()">
                     <div id="recInnerAI" class="w-12 h-12 bg-red-500 rounded-full"></div>
                 </button>
             </div>
             <div class="grid grid-cols-3 gap-2">
-                <div class="glass rounded-lg p-2 text-center"><div class="text-[10px] text-gray-400 uppercase">Rodilla</div><div class="font-mono font-bold text-xl text-blue-400" id="valKnee">--</div></div>
+                <div class="glass rounded-lg p-2 text-center"><div class="text-[10px] text-gray-400 uppercase">Rodilla</div><div class="font-mono font-bold text-xl text-yellow-400" id="valKnee">--</div></div>
                 <div class="glass rounded-lg p-2 text-center"><div class="text-[10px] text-gray-400 uppercase">Cadera</div><div class="font-mono font-bold text-xl text-purple-400" id="valHip">--</div></div>
                 <div class="glass rounded-lg p-2 text-center border-l-2 border-green-500"><div class="text-[10px] text-gray-400 uppercase">Estado</div><div class="font-bold text-xs uppercase mt-1" id="valPhase">Listo</div></div>
             </div>
@@ -266,9 +266,9 @@
 
         <!-- AI Exercise Guide -->
         <div id="exerciseGuide" class="absolute top-24 left-1/2 -translate-x-1/2 w-[92%] sm:w-[70%] max-w-xl z-30 hide">
-            <div class="glass rounded-xl p-4 border border-blue-500/20">
+            <div class="glass rounded-xl p-4 border border-yellow-400/20">
                 <div class="flex items-center justify-between gap-3 mb-2">
-                    <div class="text-xs uppercase tracking-widest text-blue-300 font-bold">Guia de grabacion</div>
+                    <div class="text-xs uppercase tracking-widest text-yellow-300 font-bold">Guia de grabacion</div>
                     <div class="text-[10px] text-gray-400">Coach IA</div>
                 </div>
                 <div id="exerciseGuideTitle" class="font-bold text-sm text-white mb-2">Ejercicio</div>
@@ -278,7 +278,7 @@
         
         <!-- AI Settings Panel -->
         <div id="aiSettingsPanel" class="absolute top-24 right-4 w-[92%] sm:w-[320px] max-w-sm z-30 hide">
-            <div class="glass rounded-xl p-4 border border-slate-500/20">
+            <div class="glass rounded-xl p-4 border border-neutral-500/20">
                 <div class="flex items-center justify-between mb-3">
                     <div class="text-xs uppercase tracking-widest text-gray-300 font-bold">Ajustes de grabacion</div>
                     <div class="text-[10px] text-gray-400">Coach IA</div>
@@ -309,7 +309,7 @@
         
         <!-- Video control for Path mode if uploaded -->
         <div id="pathVideoControls" class="absolute bottom-32 left-0 w-full px-4 z-40 hide">
-             <div class="flex justify-center items-center bg-slate-900/80 rounded-lg p-3 backdrop-blur gap-3">
+             <div class="flex justify-center items-center bg-neutral-900/80 rounded-lg p-3 backdrop-blur gap-3">
                 <button ontouchstart="" onclick="app.resetInput()" class="text-red-400 hover:text-white active:text-red-300 px-2 text-xs font-bold mr-4"><i class="fa-solid fa-rotate mr-1"></i> CAMBIAR</button>
                 <button ontouchstart="" onclick="app.toggleMainVideoPlay()" class="text-white text-xl"><i id="btnPathPlay" class="fa-solid fa-pause"></i></button>
              </div>
@@ -317,26 +317,26 @@
     </div>
 
     <!-- COMPARE WORKSPACE -->
-    <div id="compareWorkspace" class="flex-grow flex flex-col hide bg-slate-950 overflow-hidden">
+    <div id="compareWorkspace" class="flex-grow flex flex-col hide bg-black overflow-hidden">
         <div id="compareGrid" class="flex-grow flex flex-col min-h-0 relative">
             <!-- Video 1 -->
-            <div id="containerTop" class="flex-1 relative border border-slate-800 vid-container transition-all duration-300 min-h-0 min-w-0">
+            <div id="containerTop" class="flex-1 relative border border-neutral-800 vid-container transition-all duration-300 min-h-0 min-w-0">
                 <div class="vid-wrapper" id="wrapTop"><video id="vidTop" class="vid-content bg-black" playsinline loop muted></video></div>
-                <div id="overlayTop" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50 cursor-pointer hover:bg-slate-900/40 active:bg-slate-900/60 transition z-10"><i class="fa-solid fa-plus text-4xl text-gray-500 mb-2"></i><span class="text-xs font-bold text-gray-400">VIDEO 1</span><input type="file" accept="video/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="app.loadCompareVideo('top', this)"></div>
-                <div class="absolute bottom-0 left-0 w-full p-2 bg-gradient-to-t from-slate-900/90 to-transparent vid-controls z-20 flex flex-col gap-1">
+                <div id="overlayTop" class="absolute inset-0 flex flex-col items-center justify-center bg-neutral-900/50 cursor-pointer hover:bg-neutral-900/40 active:bg-neutral-900/60 transition z-10"><i class="fa-solid fa-plus text-4xl text-gray-500 mb-2"></i><span class="text-xs font-bold text-gray-400">VIDEO 1</span><input type="file" accept="video/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="app.loadCompareVideo('top', this)"></div>
+                <div class="absolute bottom-0 left-0 w-full p-2 bg-gradient-to-t from-neutral-900/90 to-transparent vid-controls z-20 flex flex-col gap-1">
                      <input type="range" id="seekTop" class="timeline" value="0" min="0" max="100" step="0.1" oninput="app.onSeekInput('top', this.value)">
                      <div class="flex justify-between items-center px-1 gap-2 flex-wrap">
-                         <div class="flex gap-2"><button ontouchstart="" onclick="app.toggleZoom('top')" class="text-white active:text-blue-400"><i id="iconZoomTop" class="fa-solid fa-magnifying-glass-plus text-xs"></i></button><button ontouchstart="" onclick="app.toggleFlip('top')" class="text-white active:text-blue-400"><i id="iconFlipTop" class="fa-solid fa-right-left text-xs"></i></button></div>
-                         <div class="flex gap-2 items-center"><button ontouchstart="" onclick="app.toggleSinglePlay('top')" class="text-white active:text-blue-400"><i id="btnPlayTop" class="fa-solid fa-play text-xs"></i></button></div>
-                         <button ontouchstart="" onclick="app.toggleMaximize('top')" class="text-blue-400 active:text-blue-300"><i id="iconMaxTop" class="fa-solid fa-expand text-xs"></i></button>
+                         <div class="flex gap-2"><button ontouchstart="" onclick="app.toggleZoom('top')" class="text-white active:text-yellow-400"><i id="iconZoomTop" class="fa-solid fa-magnifying-glass-plus text-xs"></i></button><button ontouchstart="" onclick="app.toggleFlip('top')" class="text-white active:text-yellow-400"><i id="iconFlipTop" class="fa-solid fa-right-left text-xs"></i></button></div>
+                         <div class="flex gap-2 items-center"><button ontouchstart="" onclick="app.toggleSinglePlay('top')" class="text-white active:text-yellow-400"><i id="btnPlayTop" class="fa-solid fa-play text-xs"></i></button></div>
+                         <button ontouchstart="" onclick="app.toggleMaximize('top')" class="text-yellow-400 active:text-yellow-300"><i id="iconMaxTop" class="fa-solid fa-expand text-xs"></i></button>
                      </div>
                 </div>
             </div>
             <!-- Video 2 -->
-            <div id="containerBot" class="flex-1 relative border border-slate-800 vid-container transition-all duration-300 min-h-0 min-w-0">
+            <div id="containerBot" class="flex-1 relative border border-neutral-800 vid-container transition-all duration-300 min-h-0 min-w-0">
                 <div class="vid-wrapper" id="wrapBot"><video id="vidBot" class="vid-content bg-black" playsinline loop muted></video></div>
-                <div id="overlayBot" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50 cursor-pointer hover:bg-slate-900/40 active:bg-slate-900/60 transition z-10"><i class="fa-solid fa-plus text-4xl text-gray-500 mb-2"></i><span class="text-xs font-bold text-gray-400">VIDEO 2</span><input type="file" accept="video/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="app.loadCompareVideo('bot', this)"></div>
-                <div class="absolute bottom-0 left-0 w-full p-2 bg-gradient-to-t from-slate-900/90 to-transparent vid-controls z-20 flex flex-col gap-1">
+                <div id="overlayBot" class="absolute inset-0 flex flex-col items-center justify-center bg-neutral-900/50 cursor-pointer hover:bg-neutral-900/40 active:bg-neutral-900/60 transition z-10"><i class="fa-solid fa-plus text-4xl text-gray-500 mb-2"></i><span class="text-xs font-bold text-gray-400">VIDEO 2</span><input type="file" accept="video/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="app.loadCompareVideo('bot', this)"></div>
+                <div class="absolute bottom-0 left-0 w-full p-2 bg-gradient-to-t from-neutral-900/90 to-transparent vid-controls z-20 flex flex-col gap-1">
                      <input type="range" id="seekBot" class="timeline" value="0" min="0" max="100" step="0.1" oninput="app.onSeekInput('bot', this.value)">
                      <div class="flex justify-between items-center px-1 gap-2 flex-wrap">
                          <div class="flex gap-2"><button ontouchstart="" onclick="app.toggleZoom('bot')" class="text-white active:text-purple-400"><i id="iconZoomBot" class="fa-solid fa-magnifying-glass-plus text-xs"></i></button><button ontouchstart="" onclick="app.toggleFlip('bot')" class="text-white active:text-purple-400"><i id="iconFlipBot" class="fa-solid fa-right-left text-xs"></i></button></div>
@@ -347,14 +347,14 @@
             </div>
         </div>
         <!-- Master Controls -->
-        <div class="h-auto py-3 glass flex flex-col gap-2 shrink-0 z-30 border-t border-slate-700">
+        <div class="h-auto py-3 glass flex flex-col gap-2 shrink-0 z-30 border-t border-neutral-700">
             <div class="flex items-center gap-2 px-4">
-                <button ontouchstart="" onclick="app.toggleLayout()" class="text-white bg-slate-700 p-2 rounded hover:bg-slate-600 active:bg-slate-800 transition flex-shrink-0"><i id="iconLayout" class="fa-solid fa-table-cells-large fa-rotate-90"></i></button>
+                <button ontouchstart="" onclick="app.toggleLayout()" class="text-white bg-neutral-700 p-2 rounded hover:bg-neutral-600 active:bg-neutral-800 transition flex-shrink-0"><i id="iconLayout" class="fa-solid fa-table-cells-large fa-rotate-90"></i></button>
                 <input type="range" min="0.1" max="1" step="0.1" value="1" class="w-full speed-slider" oninput="app.setSpeed(this.value)">
             </div>
             <div class="flex justify-center gap-8 items-center mt-1">
                 <button ontouchstart="" onclick="app.seekCompare(-0.1)" class="text-gray-400 hover:text-gray-300 active:text-white"><i class="fa-solid fa-rotate-left"></i></button>
-                <button ontouchstart="" onclick="app.toggleComparePlay()" class="w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full text-white flex items-center justify-center shadow-lg active:scale-95 transition"><i id="btnComparePlayIcon" class="fa-solid fa-play text-xl ml-1"></i></button>
+                <button ontouchstart="" onclick="app.toggleComparePlay()" class="w-14 h-14 bg-gradient-to-r from-yellow-500 to-purple-600 rounded-full text-white flex items-center justify-center shadow-lg active:scale-95 transition"><i id="btnComparePlayIcon" class="fa-solid fa-play text-xl ml-1"></i></button>
                 <button ontouchstart="" onclick="app.seekCompare(0.1)" class="text-gray-400 hover:text-gray-300 active:text-white"><i class="fa-solid fa-rotate-right"></i></button>
             </div>
         </div>
@@ -363,7 +363,7 @@
     <!-- AI REPORT MODAL -->
     <div id="aiModal" class="fixed inset-0 z-[100] bg-black/95 hidden flex flex-col max-h-screen overflow-hidden">
         <div class="flex justify-between items-center p-4 sm:p-6 border-b border-gray-800 flex-shrink-0">
-            <h2 class="text-xl font-bold italic">ANÁLISIS <span class="text-blue-500">AI</span></h2>
+            <h2 class="text-xl font-bold italic">ANÁLISIS <span class="text-yellow-400">AI</span></h2>
             <button ontouchstart="" onclick="document.getElementById('aiModal').classList.add('hidden')" class="text-gray-400 active:text-white"><i class="fa-solid fa-xmark text-2xl"></i></button>
         </div>
         <div class="flex-grow overflow-y-auto p-4 sm:p-6 report-panel">
@@ -375,14 +375,14 @@
                 <div><h3 class="font-bold text-lg">Puntuación Técnica</h3><p class="text-sm text-gray-400">Biomecánica</p></div>
             </div>
             <div class="space-y-4">
-                <div class="bg-gray-800 p-4 rounded-xl border-l-4 border-blue-500">
-                    <h4 class="font-bold text-blue-400 text-sm mb-1">OBSERVACIÓN PRINCIPAL</h4>
+                <div class="bg-gray-800 p-4 rounded-xl border-l-4 border-yellow-400">
+                    <h4 class="font-bold text-yellow-400 text-sm mb-1">OBSERVACIÓN PRINCIPAL</h4>
                     <p id="aiFeedbackText" class="text-sm leading-relaxed text-gray-200">Procesando datos...</p>
                 </div>
                 <div id="aiFaultsList" class="space-y-2"></div>
             </div>
         </div>
-        <div class="p-4 border-t border-gray-800 bg-gray-900 flex-shrink-0"><button ontouchstart="" onclick="document.getElementById('aiModal').classList.add('hidden')" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl active:bg-blue-700">CERRAR</button></div>
+        <div class="p-4 border-t border-gray-800 bg-gray-900 flex-shrink-0"><button ontouchstart="" onclick="document.getElementById('aiModal').classList.add('hidden')" class="w-full bg-yellow-500 text-white font-bold py-4 rounded-xl active:bg-yellow-700">CERRAR</button></div>
     </div>
 
     <script>
@@ -793,12 +793,12 @@
                         const d = new Date(lift.date);
                         const dateStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                         const card = document.createElement('div');
-                        card.className = "bg-slate-800 border border-slate-700 p-4 rounded-xl shadow cursor-pointer active:scale-95 transition flex justify-between items-center relative";
+                        card.className = "bg-neutral-800 border border-neutral-700 p-4 rounded-xl shadow cursor-pointer active:scale-95 transition flex justify-between items-center relative";
                         card.onclick = () => this.playFromHistory(lift);
                         card.innerHTML = `
                             <div class="flex-grow pr-8">
                                 <div class="flex justify-between items-center mb-1">
-                                    <span class="font-bold text-blue-400 text-sm">${lift.exercise.replace(/_/g, ' ')}</span>
+                                    <span class="font-bold text-yellow-400 text-sm">${lift.exercise.replace(/_/g, ' ')}</span>
                                     <span class="text-[10px] text-gray-400">${dateStr}</span>
                                 </div>
                                 <div class="flex justify-between items-end mt-1">
@@ -952,11 +952,11 @@
                     panel.classList.remove('hide');
                     this.updateExerciseGuide();
                     btn.classList.add('text-white');
-                    btn.classList.remove('text-blue-300');
+                    btn.classList.remove('text-yellow-300');
                 } else {
                     panel.classList.add('hide');
                     btn.classList.remove('text-white');
-                    btn.classList.add('text-blue-300');
+                    btn.classList.add('text-yellow-300');
                 }
             },
 
@@ -1376,7 +1376,7 @@
                         this.video.pause();
                         this.setMainPlayIcons(false);
                         const phaseEl = document.getElementById('valPhase');
-                        if(phaseEl) { phaseEl.innerText = "LISTO PARA REPRODUCIR"; phaseEl.className = "font-bold text-xs uppercase mt-1 text-blue-300"; }
+                        if(phaseEl) { phaseEl.innerText = "LISTO PARA REPRODUCIR"; phaseEl.className = "font-bold text-xs uppercase mt-1 text-yellow-300"; }
                     };
                     input.value = "";
                 }
@@ -1780,14 +1780,14 @@
                 if (z === 1) this.panOffsets[id] = {x:0, y:0};
                 this.applyTransform(id);
                 if (z === 1) icon.className = "fa-solid fa-magnifying-glass-plus text-xs";
-                else icon.className = "fa-solid fa-magnifying-glass-minus text-xs text-blue-400";
+                else icon.className = "fa-solid fa-magnifying-glass-minus text-xs text-yellow-400";
             },
 
             toggleFlip: function(id) {
                 const icon = document.getElementById(id === 'top' ? 'iconFlipTop' : 'iconFlipBot');
                 this.flipStates[id] *= -1;
                 this.applyTransform(id);
-                icon.className = this.flipStates[id] === -1 ? "fa-solid fa-right-left text-xs text-blue-400" : "fa-solid fa-right-left text-xs";
+                icon.className = this.flipStates[id] === -1 ? "fa-solid fa-right-left text-xs text-yellow-400" : "fa-solid fa-right-left text-xs";
             },
 
             applyTransform: function(id) {
@@ -1899,3 +1899,4 @@
     </script>
 </body>
 </html>
+
