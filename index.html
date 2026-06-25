@@ -22,23 +22,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
-    <!-- MediaPipe Tasks Vision (NEW API - loads as classic script for max mobile compatibility) -->
-    <script>
-        // We load tasks-vision via dynamic import to handle it robustly on all devices
-        (function() {
-            var s = document.createElement('script');
-            s.type = 'module';
-            s.textContent = [
-                'import { HandLandmarker, FilesetResolver }',
-                '  from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18/vision_bundle.mjs";',
-                'window._HandLandmarker = HandLandmarker;',
-                'window._FilesetResolver = FilesetResolver;',
-                'window._tasksVisionReady = true;',
-                'document.dispatchEvent(new Event("tasksVisionLoaded"));'
-            ].join('\n');
-            document.head.appendChild(s);
-        })();
-    </script>
+
 
     <style>
         :root { --safe-top: env(safe-area-inset-top); --safe-right: env(safe-area-inset-right); --safe-bottom: env(safe-area-inset-bottom); --safe-left: env(safe-area-inset-left); }
@@ -131,7 +115,7 @@
     <!-- MENU -->
     <div id="mainMenu" class="absolute inset-0 z-50 bg-neutral-900 flex flex-col p-6 overflow-y-auto">
         <header class="mb-8 mt-4">
-            <h1 class="text-3xl font-black italic tracking-tighter flex items-center">HALTERO<span class="text-yellow-400">AI</span> <span class="text-xs bg-yellow-500 font-bold text-black px-2 py-1 rounded-md ml-3 tracking-normal not-italic shadow">V7.2</span></h1>
+            <h1 class="text-3xl font-black italic tracking-tighter flex items-center">HALTERO<span class="text-yellow-400">AI</span> <span class="text-xs bg-yellow-500 font-bold text-black px-2 py-1 rounded-md ml-3 tracking-normal not-italic shadow">V7.3</span></h1>
             <p class="text-gray-400 text-sm mt-1">Edición PWA Offline</p>
         </header>
         <div class="flex-grow grid gap-4 pb-8">
@@ -1269,18 +1253,11 @@
             },
 
             initHandLandmarker: async function() {
-                // Wait for tasks-vision module to be ready
-                const waitForModule = () => new Promise((resolve) => {
-                    if (window._tasksVisionReady) { resolve(); return; }
-                    document.addEventListener('tasksVisionLoaded', resolve, { once: true });
-                    setTimeout(resolve, 5000); // fallback timeout
-                });
-                await waitForModule();
                 try {
-                    const HandLandmarker = window._HandLandmarker;
-                    const FilesetResolver = window._FilesetResolver;
+                    // Carga dinámica robusta directamente aquí (sin race conditions)
+                    const { HandLandmarker, FilesetResolver } = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.18/vision_bundle.mjs');
                     if (!HandLandmarker || !FilesetResolver) {
-                        console.warn('HandLandmarker no disponible, gestos desactivados');
+                        console.warn('HandLandmarker module exports fallidos, gestos desactivados');
                         return;
                     }
                     const vision = await FilesetResolver.forVisionTasks(
