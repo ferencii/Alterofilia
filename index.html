@@ -24,9 +24,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
     
-    <!-- TensorFlow.js Hand Pose Detection (MediaPipe WASM runtime for maximum mobile compatibility) -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/hand-pose-detection@2.0.1/dist/hand-pose-detection.min.js"></script>
+    <!-- MediaPipe Tasks-Vision dynamic import is used in JS module. No TFJS script overhead. -->
 
 
     <style>
@@ -120,7 +118,7 @@
     <!-- MENU -->
     <div id="mainMenu" class="absolute inset-0 z-50 bg-neutral-900 flex flex-col p-6 overflow-y-auto">
         <header class="mb-8 mt-4">
-            <h1 class="text-3xl font-black italic tracking-tighter flex items-center">HALTERO<span class="text-yellow-400">AI</span> <span class="text-xs bg-yellow-500 font-bold text-black px-2 py-1 rounded-md ml-3 tracking-normal not-italic shadow">V7.9.2</span></h1>
+            <h1 class="text-3xl font-black italic tracking-tighter flex items-center">HALTERO<span class="text-yellow-400">AI</span> <span class="text-xs bg-yellow-500 font-bold text-black px-2 py-1 rounded-md ml-3 tracking-normal not-italic shadow">V8.0</span></h1>
             <p class="text-gray-400 text-sm mt-1">Edición PWA Offline</p>
         </header>
         <div class="flex-grow grid gap-4 pb-8">
@@ -1195,7 +1193,7 @@
                 
                 // Correct for aspect ratio distortion in distance calculations
                 const map = this.lastMap || this.getCoverMapping();
-                const aspect = map ? (map.scaledW / map.scaledH) : 0.75;
+                const aspect = map ? (map.vw / map.vh) : 0.75;
                 const getDist = (p1, p2) => Math.hypot((p1.x - p2.x) * aspect, p1.y - p2.y);
                 
                 const wrist = handLm[0];
@@ -1304,20 +1302,27 @@
 
             initHandLandmarker: async function() {
                 try {
-                    // MediaPipe WASM runtime via TFJS wrapper (rock solid, fast and runs offline/locally via WASM)
-                    const model = handPoseDetection.SupportedModels.MediaPipeHands;
-                    const detectorConfig = {
-                        runtime: 'mediapipe',
-                        solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/hands',
-                        modelType: 'lite',
-                        maxHands: 1
-                    };
-                    this.handLandmarker = await handPoseDetection.createDetector(model, detectorConfig);
+                    const { HandLandmarker, FilesetResolver } = await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs");
+                    const vision = await FilesetResolver.forVisionTasks(
+                        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+                    );
+                    this.handLandmarker = await HandLandmarker.createFromOptions(
+                        vision,
+                        {
+                            baseOptions: {
+                                modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task"
+                            },
+                            runningMode: "VIDEO",
+                            numHands: 1,
+                            minHandDetectionConfidence: 0.7,
+                            minHandPresenceConfidence: 0.7,
+                            minTrackingConfidence: 0.7
+                        }
+                    );
                     this.handLandmarkerReady = true;
-                    console.log('MediaPipe WASM Hand Detector listo ✓');
+                    console.log('MediaPipe Tasks Vision Hand Detector listo ✓');
                 } catch(e) {
                     console.error('Error iniciando MediaPipe Hand Detector:', e);
-                    // Critical debug info for mobile users since they don't have a console
                     alert("Error en el detector de mano:\n" + e.message);
                 }
             },
@@ -1543,13 +1548,13 @@
                     const p1 = handLm[a]; const p2 = handLm[b];
                     if (!p1 || !p2) return;
                     this.ctx.beginPath();
-                    this.ctx.moveTo(p1.x * map.scaledW - map.offsetX, p1.y * map.scaledH - map.offsetY);
-                    this.ctx.lineTo(p2.x * map.scaledW - map.offsetX, p2.y * map.scaledH - map.offsetY);
+                    this.ctx.moveTo(p1.x * map.vw, p1.y * map.vh);
+                    this.ctx.lineTo(p2.x * map.vw, p2.y * map.vh);
                     this.ctx.stroke();
                 });
                 handLm.forEach(p => {
                     this.ctx.beginPath();
-                    this.ctx.arc(p.x * map.scaledW - map.offsetX, p.y * map.scaledH - map.offsetY, 4, 0, Math.PI*2);
+                    this.ctx.arc(p.x * map.vw, p.y * map.vh, 4, 0, Math.PI*2);
                     this.ctx.fillStyle = '#000';
                     this.ctx.fill();
                 });
@@ -1563,15 +1568,19 @@
                 
                 if (text) {
                     this.ctx.save();
-                    const wristX = handLm[0].x * map.scaledW - map.offsetX;
-                    const wristY = handLm[0].y * map.scaledH - map.offsetY - 120;
+                    const wristX = handLm[0].x * map.vw;
+                    const wristY = handLm[0].y * map.vh - 80;
                     this.ctx.font = "900 32px 'Roboto', sans-serif";
                     this.ctx.textAlign = 'center';
                     const metrics = this.ctx.measureText(text);
                     const padding = 12;
                     this.ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
                     this.ctx.beginPath();
-                    this.ctx.roundRect(wristX - metrics.width/2 - padding, wristY - 32 - padding, metrics.width + padding*2, 32 + padding*2, 8);
+                    if (typeof this.ctx.roundRect === 'function') {
+                        this.ctx.roundRect(wristX - metrics.width/2 - padding, wristY - 32 - padding, metrics.width + padding*2, 32 + padding*2, 8);
+                    } else {
+                        this.ctx.rect(wristX - metrics.width/2 - padding, wristY - 32 - padding, metrics.width + padding*2, 32 + padding*2);
+                    }
                     this.ctx.fill();
                     this.ctx.fillStyle = this.isRecording ? '#ef4444' : '#facc15';
                     this.ctx.shadowColor = 'rgba(0,0,0,0.8)';
@@ -1591,44 +1600,19 @@
                 this.lastFrameTime = timestamp || performance.now();
                 this.frameCount = (this.frameCount || 0) + 1;
                 try {
-                    // New API: TFJS Hand Pose Detection via auxiliary offscreen canvas to fix mobile orientation/rotation
+                    // New API: MediaPipe Tasks-Vision Hand Landmarker. Running directly on the video element for native performance.
                     if (this.mode === 'AI' && this.settings.gestureRecord && this.isCameraActive && this.video.srcObject) {
                         if (this.handLandmarkerReady && this.handLandmarker && (this.frameCount % 3 === 0 || !isMobile)) {
-                            if (!this.handCanvas) {
-                                this.handCanvas = document.createElement('canvas');
-                                this.handCtx = this.handCanvas.getContext('2d');
-                            }
-                            const targetW = 360;
-                            const targetH = Math.round(360 / (this.video.videoWidth / this.video.videoHeight || 0.75));
-                            if (this.handCanvas.width !== targetW || this.handCanvas.height !== targetH) {
-                                this.handCanvas.width = targetW;
-                                this.handCanvas.height = targetH;
-                            }
-                            this.handCtx.drawImage(this.video, 0, 0, targetW, targetH);
-
-                            this.handLandmarker.estimateHands(this.handCanvas).then(hands => {
-                                if (hands && hands.length > 0) {
-                                    const h = hands[0];
-                                    const vw = this.handCanvas.width;
-                                    const vh = this.handCanvas.height;
-                                    // Normalize from pixel coordinates back to 0-1 range to match legacy API expectations
-                                    const normalizedLandmarks = h.keypoints.map(kp => ({
-                                        x: kp.x / vw,
-                                        y: kp.y / vh,
-                                        z: (kp.z || 0) / vw, // z is also in pixels
-                                        visibility: 1
-                                    }));
-                                    const result = {
-                                        landmarks: [normalizedLandmarks],
-                                        handedness: [[{ category: h.handedness }]]
-                                    };
+                            try {
+                                const result = this.handLandmarker.detectForVideo(this.video, this.lastFrameTime);
+                                if (result && result.landmarks && result.landmarks.length > 0) {
                                     this.onHandsResults(result);
                                 } else {
                                     this.onHandsResults({ landmarks: [], handedness: [] });
                                 }
-                            }).catch(e => {
-                                console.error("[DEBUG] estimateHands error:", e);
-                            });
+                            } catch (e) {
+                                console.error("[DEBUG] Tasks-Vision detectForVideo error:", e);
+                            }
                         }
                     }
                     // Only run body pose if we are NOT using the live webcam stream (i.e. we are playing a video file).
@@ -1670,26 +1654,21 @@
 
             getCoverMapping: function() {
                 if (!this.video) return null;
-                const vw = this.video.videoWidth;
-                const vh = this.video.videoHeight;
-                const cw = this.video.clientWidth;
-                const ch = this.video.clientHeight;
-                if (!vw || !vh || !cw || !ch) return null;
-                if (this.canvas.width !== cw || this.canvas.height !== ch) {
-                    this.canvas.width = cw; this.canvas.height = ch;
+                const isRotated = this.video.srcObject && 
+                    ((this.video.videoWidth > this.video.videoHeight) !== (this.video.clientWidth > this.video.clientHeight));
+                const vw = isRotated ? this.video.videoHeight : this.video.videoWidth;
+                const vh = isRotated ? this.video.videoWidth : this.video.videoHeight;
+                if (!vw || !vh) return null;
+                if (this.canvas.width !== vw || this.canvas.height !== vh) {
+                    this.canvas.width = vw; this.canvas.height = vh;
                 }
-                const scale = Math.max(cw / vw, ch / vh);
-                const scaledW = vw * scale;
-                const scaledH = vh * scale;
-                const offsetX = (scaledW - cw) / 2;
-                const offsetY = (scaledH - ch) / 2;
-                return { vw, vh, cw, ch, scale, scaledW, scaledH, offsetX, offsetY };
+                return { vw, vh };
             },
 
             mapLandmark: function(lm, map) {
                 return {
-                    x: (lm.x * map.vw * map.scale) - map.offsetX,
-                    y: (lm.y * map.vh * map.scale) - map.offsetY
+                    x: lm.x * map.vw,
+                    y: lm.y * map.vh
                 };
             },
 
