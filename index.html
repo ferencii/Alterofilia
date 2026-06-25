@@ -120,7 +120,7 @@
     <!-- MENU -->
     <div id="mainMenu" class="absolute inset-0 z-50 bg-neutral-900 flex flex-col p-6 overflow-y-auto">
         <header class="mb-8 mt-4">
-            <h1 class="text-3xl font-black italic tracking-tighter flex items-center">HALTERO<span class="text-yellow-400">AI</span> <span class="text-xs bg-yellow-500 font-bold text-black px-2 py-1 rounded-md ml-3 tracking-normal not-italic shadow">V7.9</span></h1>
+            <h1 class="text-3xl font-black italic tracking-tighter flex items-center">HALTERO<span class="text-yellow-400">AI</span> <span class="text-xs bg-yellow-500 font-bold text-black px-2 py-1 rounded-md ml-3 tracking-normal not-italic shadow">V7.9.1</span></h1>
             <p class="text-gray-400 text-sm mt-1">Edición PWA Offline</p>
         </header>
         <div class="flex-grow grid gap-4 pb-8">
@@ -1574,16 +1574,26 @@
                 this.lastFrameTime = timestamp || performance.now();
                 this.frameCount = (this.frameCount || 0) + 1;
                 try {
-                    // New API: TFJS Hand Pose Detection
+                    // New API: TFJS Hand Pose Detection via auxiliary offscreen canvas to fix mobile orientation/rotation
                     if (this.mode === 'AI' && this.settings.gestureRecord && this.isCameraActive && this.video.srcObject) {
                         if (this.handLandmarkerReady && this.handLandmarker && (this.frameCount % 3 === 0 || !isMobile)) {
-                            console.log("[DEBUG] Running hand estimation on frame...");
-                            this.handLandmarker.estimateHands(this.video).then(hands => {
-                                console.log("[DEBUG] Hand estimation returned", hands ? hands.length : 0, "hands.");
+                            if (!this.handCanvas) {
+                                this.handCanvas = document.createElement('canvas');
+                                this.handCtx = this.handCanvas.getContext('2d');
+                            }
+                            const targetW = 360;
+                            const targetH = Math.round(360 / (this.video.videoWidth / this.video.videoHeight || 0.75));
+                            if (this.handCanvas.width !== targetW || this.handCanvas.height !== targetH) {
+                                this.handCanvas.width = targetW;
+                                this.handCanvas.height = targetH;
+                            }
+                            this.handCtx.drawImage(this.video, 0, 0, targetW, targetH);
+
+                            this.handLandmarker.estimateHands(this.handCanvas).then(hands => {
                                 if (hands && hands.length > 0) {
                                     const h = hands[0];
-                                    const vw = this.video.videoWidth;
-                                    const vh = this.video.videoHeight;
+                                    const vw = this.handCanvas.width;
+                                    const vh = this.handCanvas.height;
                                     // Normalize from pixel coordinates back to 0-1 range to match legacy API expectations
                                     const normalizedLandmarks = h.keypoints.map(kp => ({
                                         x: kp.x / vw,
