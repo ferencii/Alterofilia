@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+    <!-- Background -->
+    <rect width="512" height="512" rx="112" fill="#0f172a"/>
+    
+    <!-- AI Network overlay -->
+    <path d="M140 160 L256 100 L372 160 L256 220 Z" fill="none" stroke="#3b82f6" stroke-width="6" stroke-dasharray="10 10"/>
+    <circle cx="256" cy="100" r="12" fill="#60a5fa"/>
+    <circle cx="140" cy="160" r="12" fill="#60a5fa"/>
+    <circle cx="372" cy="160" r="12" fill="#60a5fa"/>
+    <circle cx="256" cy="220" r="12" fill="#60a5fa"/>
+    
+    <!-- Central Beam -->
+    <path d="M256 220 L256 340" fill="none" stroke="#3b82f6" stroke-width="6" stroke-dasharray="8 8"/>
+    
+    <!-- Barbell Shaft -->
+    <rect x="70" y="246" width="372" height="20" rx="6" fill="#94a3b8"/>
+    
+    <!-- Left Weights -->
+    <rect x="90" y="216" width="24" height="80" rx="4" fill="#3b82f6"/>
+    <rect x="120" y="200" width="24" height="112" rx="4" fill="#2563eb"/>
+    <rect x="150" y="186" width="28" height="140" rx="6" fill="#1d4ed8"/>
+    
+    <!-- Right Weights -->
+    <rect x="398" y="216" width="24" height="80" rx="4" fill="#3b82f6"/>
+    <rect x="368" y="200" width="24" height="112" rx="4" fill="#2563eb"/>
+    <rect x="334" y="186" width="28" height="140" rx="6" fill="#1d4ed8"/>
+    
+    <!-- Camera/Eye Lens -->
+    <circle cx="256" cy="350" r="44" fill="#1e293b" stroke="#3b82f6" stroke-width="8"/>
+    <circle cx="256" cy="350" r="18" fill="#60a5fa"/>
+    <circle cx="264" cy="342" r="6" fill="#ffffff" opacity="0.8"/>
+</svg>
